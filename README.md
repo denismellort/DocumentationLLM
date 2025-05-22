@@ -1,34 +1,61 @@
+# DocumentationLLM
+
+Sistema para ingestão e análise de documentações com suporte a LLMs.
+
+---
+
 ## Instalação Completa
 
-### Passo 1: Ambiente Virtual (recomendado)
+### Passo 1: Clone o Repositório
 
-#### Windows
-```powershell
-# Crie o ambiente virtual
+```bash
+git clone https://github.com/denismellort/DocumentationLLM.git
+cd DocumentationLLM
+```
+
+---
+
+### Passo 2: Ambiente Virtual (recomendado)
+
+#### Windows (CMD)
+```cmd
 python -m venv venv
+venv\Scripts\activate
+```
 
-# Ative o ambiente virtual
+#### Windows (PowerShell)
+```powershell
+python -m venv venv
 .\venv\Scripts\activate
 ```
 
 #### Linux/MacOS
 ```bash
-# Crie o ambiente virtual
 python3 -m venv venv
-
-# Ative o ambiente virtual
 source venv/bin/activate
 ```
 
-### Passo 2: Configuração do arquivo .env
+---
 
-Copie o arquivo de exemplo e edite conforme suas chaves:
+### Passo 3: Configuração do arquivo .env
 
+Copie o arquivo de exemplo:
+
+#### Windows (CMD)
+```cmd
+copy .env.example .env
+```
+#### Windows (PowerShell)
+```powershell
+Copy-Item .env.example .env
+```
+#### Linux/MacOS
 ```bash
 cp .env.example .env
 ```
 
-Abra o arquivo `.env` e preencha as variáveis necessárias, por exemplo:
+Edite o arquivo `.env` e preencha com suas chaves de API (Somente OpenAI necessaria inicialmente):
+
 ```
 OPENAI_API_KEY=sua-chave-aqui
 LANGSMITH_API_KEY=sua-chave-aqui
@@ -37,19 +64,45 @@ GOOGLE_API_KEY=sua-chave-aqui
 FIRECRAWL_API_KEY=sua-chave-aqui
 ```
 
-### Passo 3: Instale as Dependências
+---
+
+### Passo 4: Instale as Dependências
+
 ```bash
-# Instale as dependências necessárias
 pip install -r requirements.txt
 ```
 
-### Passo 4: Instale como Pacote Python (para usar CLI)
+---
+
+### Passo 5: Instale como Pacote Python (uso via CLI)
+
 ```bash
-# Instale o projeto como pacote Python
 pip install .
 ```
 
-**Após estes passos você poderá:**
-- Usar o comando `docllm` diretamente no terminal (CLI)
+---
+
+## Uso
+
+Após a instalação como pacote, você poderá:
+
+- Usar o comando `docllm` diretamente no terminal:
+  ```bash
+  docllm --help
+  ```
 - Importar o projeto em outros scripts Python
-- Rodar sem especificar caminhos completos 
+- Rodar sem precisar de caminhos absolutos
+
+---
+
+## Dicas
+
+- Sempre ative o ambiente virtual antes de usar:
+  - `venv\Scripts\activate` (CMD)
+  - `.\venv\Scripts\activate` (PowerShell)
+  - `source venv/bin/activate` (Linux/Mac)
+
+- Para atualizar o pacote após alterações no código:
+  ```bash
+  pip install . --upgrade
+  ``` 
