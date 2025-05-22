@@ -24,7 +24,7 @@ from rich.prompt import Prompt, Confirm
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 try:
-    from src.utils.version_control import VersionControl
+    from utils.version_control import VersionControl
     console = Console()
 except ImportError:
     print("Erro ao importar módulos necessários.")

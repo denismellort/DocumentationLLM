@@ -110,6 +110,9 @@ Ao contribuir com o projeto ou evoluí-lo, mantenha em mente:
 [2023-05-22] - Decisão: Implementação de cache local para reduzir chamadas repetitivas à API da OpenAI.
 Motivação: Reduzir custos de tokens e melhorar desempenho em processamento de documentações similares.
 Responsável: @usuario
-```
+
+[2025-05-22] - Correção do CLI docllm
+Motivação: Criado wrapper `documentationllm.cli`, ajustados imports em `src/main.py`, incluído `py_modules=["main"]` no `setup.py`. O comando `docllm --help` agora funciona no ambiente virtual, confirmando a resolução.
+Responsável: Assistente IA @cursor
 
 **Este documento deve ser atualizado regularmente com novas decisões e contextos!**

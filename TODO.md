@@ -106,6 +106,7 @@ Este arquivo contém um registro de tarefas a serem implementadas e bugs a serem
 - [✓] Erro ao tentar baixar repositório com URL incorreta (adicionado tratamento de erro)
 - [⚠️] O agente de análise de tokens não está registrando tokens usados corretamente
 - [ ] Problemas com encodings em alguns sistemas operacionais
+- [✓] Problema: CLI `docllm` falha com `ModuleNotFoundError` - Resolvido criando wrapper documentationllm.cli
 
 ---
 
