@@ -1,0 +1,29 @@
+# Configuração para DocumentationLLM
+
+# Modelos para cada etapa
+models:
+  download: local
+  parsing: local
+  semantic_linking: gpt-4
+  output_generation: gpt-3.5-turbo
+  supervisor: gpt-4
+  token_analyst: local
+
+# Opções de processamento
+processing:
+  enable_supervision: true
+  enable_token_analysis: true
+  enable_execution_history: true
+  log_level: info
+  max_tokens_per_call: 4000
+
+# Opções de escalabilidade
+scaling:
+  use_max_node: false
+  max_concurrent_tasks: 1
+
+# Diretórios padrão
+directories:
+  originals: data/originals
+  processed: data/processed
+  temp: data/temp 

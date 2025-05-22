@@ -1,0 +1,55 @@
+# Arquivos de ambiente e configuração
+.env
+.env.local
+.env.*.local
+
+# Arquivos do Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Diretórios de dados e temporários
+data/temp/
+data/originals/*
+data/processed/*
+!data/originals/.gitkeep
+!data/processed/.gitkeep
+!data/temp/.gitkeep
+
+# Logs
+logs/*
+!logs/.gitkeep
+*.log
+
+# Ambiente virtual
+.venv/
+venv/
+ENV/
+
+# IDEs e editores
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Controle de versão
+.version_control/ 
