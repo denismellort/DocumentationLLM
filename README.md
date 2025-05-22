@@ -45,13 +45,54 @@ Diferentemente de abordagens tradicionais que usam regex e parsing estático, o 
 4. **Geração de Saída**: Salva em formato LLM-friendly (JSON/Markdown estruturado).
 5. **Relatórios**: Gera logs detalhados, análise de custos e sugestões de melhoria.
 
+## Instalação Completa
+
+### Passo 1: Ambiente Virtual (recomendado)
+
+#### Windows
+```powershell
+# Crie o ambiente virtual
+python -m venv venv
+
+# Ative o ambiente virtual
+.\venv\Scripts\activate
+```
+
+#### Linux/MacOS
+```bash
+# Crie o ambiente virtual
+python3 -m venv venv
+
+# Ative o ambiente virtual
+source venv/bin/activate
+```
+
+### Passo 2: Instale as Dependências
+```bash
+# Instale as dependências necessárias
+pip install -r requirements.txt
+```
+
+### Passo 3: Instale como Pacote Python (para usar CLI)
+```bash
+# Instale o projeto como pacote Python
+pip install .
+```
+
+**Após estes passos você poderá:**
+- Usar o comando `docllm` diretamente no terminal (CLI)
+- Importar o projeto em outros scripts Python
+- Rodar sem especificar caminhos completos
+
 ## Uso
 
-```bash
-# Instalação
-pip install -r requirements.txt
+Após seguir os passos de instalação acima, você pode usar a ferramenta de duas formas:
 
-# Uso básico
+```bash
+# Usando o CLI (recomendado após instalação completa):
+docllm --repo URL_DO_REPOSITÓRIO --output ./data/processed/
+
+# Ou diretamente via Python:
 python src/main.py --repo URL_DO_REPOSITÓRIO --output ./data/processed/
 
 # Configuração avançada
@@ -61,35 +102,3 @@ python src/main.py --config config.yaml
 ## Estrutura do Projeto
 
 ```
-DocumentationLLM/
-  data/
-    originals/      # Documentação bruta baixada dos repositórios
-    processed/      # Saída LLM-friendly (pares explicação-código)
-    temp/           # Arquivos temporários (limpos após uso)
-  src/
-    agents/         # Agentes especializados do pipeline
-    utils/          # Funções utilitárias
-    prompts/        # Templates de prompts para IA
-  tests/            # Testes unitários e de integração
-```
-
-## Configuração
-
-O arquivo `.env` ou `config.yaml` permite configurar:
-
-- Chaves de API (OpenAI, etc.)
-- Modelo de IA para cada etapa do pipeline
-- Parâmetros de processamento
-- Níveis de supervisão e logging
-
-## Contribuindo
-
-Veja `CONTRIBUTING.md` para diretrizes sobre como contribuir com o projeto.
-
-## Contextualização
-
-O arquivo `CONTEXT.md` contém detalhes sobre decisões de arquitetura, uso de IA e histórico de desenvolvimento.
-
-## Licença
-
-Este projeto é licenciado sob a licença MIT - veja o arquivo `LICENSE` para detalhes.
