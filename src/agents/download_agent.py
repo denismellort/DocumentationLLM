@@ -10,10 +10,31 @@ processando os parâmetros de URL e configurando o ambiente para o processamento
 import os
 import shutil
 import re
+import json
+from datetime import datetime
 from git import Repo, GitCommandError
 from urllib.parse import urlparse
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
+
+# Importar funções de segurança usando importação absoluta
+try:
+    from src.utils.security import (
+        validate_url,
+        sanitize_path,
+        sanitize_filename,
+        is_dangerous_file,
+        generate_content_hash
+    )
+except ImportError:
+    # Fallback para importação relativa para desenvolvimento
+    from ..utils.security import (
+        validate_url,
+        sanitize_path,
+        sanitize_filename,
+        is_dangerous_file,
+        generate_content_hash
+    )
 
 console = Console()
 
@@ -35,6 +56,9 @@ class DownloadAgent:
         self.target_dir = context["directories"]["originals"]
         self.temp_dir = os.path.join(context["directories"]["temp"], "download")
         
+        # Verificar se temos logger
+        self.logger = context.get("logger")
+        
         # Garantir que o diretório temporário exista
         os.makedirs(self.temp_dir, exist_ok=True)
     
@@ -45,6 +69,16 @@ class DownloadAgent:
         Returns:
             dict: Informações sobre o repositório (tipo, owner, nome, etc).
         """
+        # Usar a nova função de validação de URL
+        is_valid, error_message = validate_url(self.repo_url)
+        
+        if not is_valid:
+            if self.logger:
+                self.logger.error(f"URL inválida: {error_message}")
+            else:
+                console.print(f"[bold red]URL inválida: {error_message}[/bold red]")
+            raise ValueError(f"URL inválida: {error_message}")
+        
         # Verificar se é um caminho local
         if os.path.exists(self.repo_url) or os.path.exists(os.path.abspath(self.repo_url)):
             # Determinar o caminho absoluto
@@ -141,7 +175,10 @@ class DownloadAgent:
         """
         # Verificar se é um repositório local
         if repo_info["type"] == "local":
-            console.print(f"[green]Repositório local encontrado em: {repo_info['url']}[/green]")
+            if self.logger:
+                self.logger.info(f"Repositório local encontrado em: {repo_info['url']}")
+            else:
+                console.print(f"[green]Repositório local encontrado em: {repo_info['url']}[/green]")
             return repo_info["url"]
         
         # Limpar diretório temporário, se existir
@@ -152,6 +189,10 @@ class DownloadAgent:
         
         # Determinar o diretório para o clone
         repo_name = repo_info["name"] or "unknown_repo"
+        
+        # Sanitizar nome do repositório para segurança
+        repo_name = sanitize_filename(repo_name)
+        
         clone_dir = os.path.join(self.temp_dir, repo_name)
         
         # Clonar o repositório
@@ -171,13 +212,20 @@ class DownloadAgent:
                     depth=1
                 )
                 
-                console.print(f"[green]Repositório clonado com sucesso em: {clone_dir}[/green]")
+                if self.logger:
+                    self.logger.info(f"Repositório clonado com sucesso em: {clone_dir}")
+                else:
+                    console.print(f"[green]Repositório clonado com sucesso em: {clone_dir}[/green]")
+                    
                 return clone_dir
             
             except GitCommandError as e:
                 # Tentar clonar sem especificar branch, caso o anterior falhe
                 if "Remote branch not found" in str(e):
-                    console.print(f"[yellow]Branch '{repo_info['branch']}' não encontrada. Tentando clonar a branch padrão...[/yellow]")
+                    if self.logger:
+                        self.logger.warning(f"Branch '{repo_info['branch']}' não encontrada. Tentando clonar a branch padrão...")
+                    else:
+                        console.print(f"[yellow]Branch '{repo_info['branch']}' não encontrada. Tentando clonar a branch padrão...[/yellow]")
                     
                     try:
                         Repo.clone_from(
@@ -186,60 +234,61 @@ class DownloadAgent:
                             depth=1
                         )
                         
-                        console.print(f"[green]Repositório clonado com sucesso em: {clone_dir}[/green]")
+                        if self.logger:
+                            self.logger.info(f"Repositório clonado com sucesso em: {clone_dir}")
+                        else:
+                            console.print(f"[green]Repositório clonado com sucesso em: {clone_dir}[/green]")
+                            
                         return clone_dir
                     
                     except GitCommandError as e2:
+                        if self.logger:
+                            self.logger.error(f"Falha ao clonar repositório: {str(e2)}")
                         raise ValueError(f"Falha ao clonar repositório: {str(e2)}")
                 else:
+                    if self.logger:
+                        self.logger.error(f"Falha ao clonar repositório: {str(e)}")
                     raise ValueError(f"Falha ao clonar repositório: {str(e)}")
     
     def _process_documentation_files(self, repo_dir):
         """
-        Processa e copia os arquivos de documentação do repositório para o diretório alvo.
+        Processa o repositório para identificar arquivos de documentação.
         
         Args:
             repo_dir (str): Caminho para o repositório clonado.
         
         Returns:
-            list: Lista de arquivos de documentação processados.
+            list: Lista de arquivos de documentação encontrados.
         """
-        # Padrões para identificar arquivos de documentação
-        doc_patterns = [
-            r'.*\.md$',          # Markdown
-            r'.*\.mdx$',         # MDX (Markdown with JSX)
-            r'.*\.rst$',         # reStructuredText
-            r'.*\.txt$',         # Text files
-            r'.*\.html$',        # HTML
-            r'.*\.htm$',         # HTM
-            r'.*\.ipynb$',       # Jupyter Notebook
-            r'.*\.(doc|docx)$',  # Word
-            r'.*\.pdf$'          # PDF
-        ]
+        def is_doc_file(filename):
+            """Verifica se um arquivo é um arquivo de documentação baseado na extensão."""
+            doc_extensions = [
+                '.md', '.markdown',  # Markdown
+                '.rst',              # reStructuredText
+                '.txt',              # Texto simples
+                '.adoc', '.asciidoc', # AsciiDoc
+                '.html', '.htm',     # HTML
+                '.wiki',             # Wiki
+                '.tex',              # LaTeX
+                '.xml',              # XML
+                '.csv',              # Dados estruturados
+                '.json',             # JSON
+                '.yaml', '.yml'      # YAML
+            ]
+            
+            return any(filename.lower().endswith(ext) for ext in doc_extensions)
         
         # Diretórios comuns de documentação
         doc_dirs = [
-            'docs',
-            'doc',
-            'documentation',
-            'wiki',
-            'examples',
-            'tutorials',
-            'guide',
-            'guides',
-            'manual',
-            'manuals'
+            'docs', 'documentation', 'doc',
+            'wiki', 'help',
+            'examples', 'tutorials',
+            'manual', 'guide', 'guides',
+            'reference'
         ]
         
-        # Lista para armazenar os arquivos encontrados
         found_files = []
-        
-        # Função auxiliar para verificar se um arquivo corresponde aos padrões de documentação
-        def is_doc_file(filename):
-            return any(re.match(pattern, filename.lower()) for pattern in doc_patterns)
-        
-        # Buscar arquivos de documentação
-        console.print("[blue]Procurando arquivos de documentação...[/blue]")
+        found_files_metadata = {}
         
         # 1. Buscar em diretórios específicos
         for doc_dir in doc_dirs:
@@ -248,17 +297,27 @@ class DownloadAgent:
                 for root, _, files in os.walk(dir_path):
                     for file in files:
                         if is_doc_file(file):
-                            found_files.append(os.path.join(root, file))
+                            file_path = os.path.join(root, file)
+                            found_files.append(file_path)
+                            
+                            # Coletar metadados
+                            self._collect_file_metadata(file_path, repo_dir, found_files_metadata)
         
         # 2. Buscar na raiz (especialmente README.md e outros arquivos comuns)
         for file in os.listdir(repo_dir):
             file_path = os.path.join(repo_dir, file)
             if os.path.isfile(file_path) and is_doc_file(file):
                 found_files.append(file_path)
+                
+                # Coletar metadados
+                self._collect_file_metadata(file_path, repo_dir, found_files_metadata)
         
         # Se não encontrarmos nada nos diretórios específicos, buscar em todo o repositório
         if not found_files:
-            console.print("[yellow]Nenhum arquivo de documentação encontrado em diretórios convencionais. Buscando em todo o repositório...[/yellow]")
+            if self.logger:
+                self.logger.warning("Nenhum arquivo de documentação encontrado em diretórios convencionais. Buscando em todo o repositório...")
+            else:
+                console.print("[yellow]Nenhum arquivo de documentação encontrado em diretórios convencionais. Buscando em todo o repositório...[/yellow]")
             
             for root, _, files in os.walk(repo_dir):
                 # Ignorar diretórios ocultos (ex: .git)
@@ -267,29 +326,184 @@ class DownloadAgent:
                     
                 for file in files:
                     if is_doc_file(file):
-                        found_files.append(os.path.join(root, file))
+                        file_path = os.path.join(root, file)
+                        found_files.append(file_path)
+                        
+                        # Coletar metadados
+                        self._collect_file_metadata(file_path, repo_dir, found_files_metadata)
         
-        # Copiar arquivos encontrados para o diretório alvo
-        if found_files:
-            console.print(f"[green]Encontrados {len(found_files)} arquivos de documentação.[/green]")
-            
-            for source_file in found_files:
-                # Calcular caminho relativo ao diretório do repositório
-                rel_path = os.path.relpath(source_file, repo_dir)
-                # Construir caminho no diretório alvo
-                target_file = os.path.join(self.target_dir, rel_path)
-                
-                # Garantir que o diretório de destino exista
-                os.makedirs(os.path.dirname(target_file), exist_ok=True)
-                
-                # Copiar o arquivo
-                shutil.copy2(source_file, target_file)
-            
-            console.print(f"[green]Arquivos copiados para: {self.target_dir}[/green]")
+        # Salvar metadados no contexto
+        self.context["documentation_files_metadata"] = found_files_metadata
+        
+        # Gerar relatório detalhado de arquivos
+        self._generate_files_report(found_files, found_files_metadata, repo_dir)
+        
+        if self.logger:
+            self.logger.info(f"Encontrados {len(found_files)} arquivos de documentação")
         else:
-            console.print("[red]Nenhum arquivo de documentação encontrado.[/red]")
-        
+            console.print(f"[green]Encontrados {len(found_files)} arquivos de documentação[/green]")
+            
         return found_files
+    
+    def _collect_file_metadata(self, file_path, repo_dir, metadata_dict):
+        """
+        Coleta metadados de um arquivo.
+        
+        Args:
+            file_path (str): Caminho completo para o arquivo
+            repo_dir (str): Diretório raiz do repositório
+            metadata_dict (dict): Dicionário para armazenar metadados
+        """
+        try:
+            # Caminho relativo para o arquivo (para manter consistência)
+            rel_path = os.path.relpath(file_path, repo_dir)
+            
+            # Obter tamanho
+            file_size = os.path.getsize(file_path)
+            
+            # Calcular hash para verificação de integridade
+            file_hash = generate_content_hash(open(file_path, 'rb').read())
+            
+            # Obter última modificação
+            mtime = os.path.getmtime(file_path)
+            last_modified = datetime.fromtimestamp(mtime).isoformat()
+            
+            # Determinar tipo de arquivo baseado na extensão
+            _, ext = os.path.splitext(file_path)
+            file_type = ext.lower().strip('.')
+            if not file_type:
+                file_type = "unknown"
+                
+            # Verificar se é potencialmente perigoso
+            is_dangerous = is_dangerous_file(os.path.basename(file_path))
+            
+            # Armazenar metadados
+            metadata_dict[rel_path] = {
+                "size": file_size,
+                "size_formatted": self._format_file_size(file_size),
+                "hash": file_hash,
+                "last_modified": last_modified,
+                "type": file_type,
+                "is_dangerous": is_dangerous,
+                "absolute_path": file_path
+            }
+            
+            # Log de arquivo processado se tivermos logger
+            if self.logger:
+                self.logger.log_file_processing(
+                    file_path=file_path,
+                    file_size=file_size,
+                    file_type=file_type,
+                    file_hash=file_hash,
+                    metadata={
+                        "última_modificação": last_modified,
+                        "potencialmente_perigoso": is_dangerous
+                    }
+                )
+                
+        except Exception as e:
+            if self.logger:
+                self.logger.error(f"Erro ao coletar metadados do arquivo {file_path}: {str(e)}")
+            else:
+                console.print(f"[red]Erro ao coletar metadados do arquivo {file_path}: {str(e)}[/red]")
+    
+    def _format_file_size(self, size_in_bytes):
+        """
+        Formata o tamanho do arquivo para exibição.
+        
+        Args:
+            size_in_bytes (int): Tamanho em bytes
+            
+        Returns:
+            str: Tamanho formatado
+        """
+        if size_in_bytes < 1024:
+            return f"{size_in_bytes} bytes"
+        elif size_in_bytes < 1024 * 1024:
+            return f"{size_in_bytes / 1024:.2f} KB"
+        else:
+            return f"{size_in_bytes / (1024 * 1024):.2f} MB"
+    
+    def _generate_files_report(self, files, metadata, repo_dir):
+        """
+        Gera um relatório detalhado dos arquivos encontrados.
+        
+        Args:
+            files (list): Lista de arquivos
+            metadata (dict): Metadados dos arquivos
+            repo_dir (str): Diretório raiz do repositório
+        """
+        # Calcular estatísticas gerais
+        total_size = sum(metadata[os.path.relpath(f, repo_dir)]["size"] for f in files)
+        file_types = {}
+        
+        for file_path in files:
+            rel_path = os.path.relpath(file_path, repo_dir)
+            file_type = metadata[rel_path]["type"]
+            
+            if file_type not in file_types:
+                file_types[file_type] = 0
+            file_types[file_type] += 1
+        
+        # Gerar relatório
+        report_path = os.path.join(self.context["directories"]["processed"], "files_report.md")
+        
+        report = f"""# Relatório de Arquivos - DocumentationLLM
+
+## Informações Gerais
+
+- **ID de Execução:** {self.context["execution_id"]}
+- **Repositório:** {self.context["repo_url"]}
+- **Total de Arquivos:** {len(files)}
+- **Tamanho Total:** {self._format_file_size(total_size)}
+- **Data de Processamento:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+
+## Distribuição por Tipo
+
+| Tipo de Arquivo | Quantidade |
+|----------------|------------|
+"""
+        
+        for file_type, count in sorted(file_types.items(), key=lambda x: x[1], reverse=True):
+            report += f"| {file_type} | {count} |\n"
+        
+        report += """
+## Detalhes dos Arquivos
+
+| Arquivo | Tipo | Tamanho | Última Modificação |
+|---------|------|---------|-------------------|
+"""
+        
+        for file_path in sorted(files):
+            rel_path = os.path.relpath(file_path, repo_dir)
+            file_data = metadata[rel_path]
+            
+            report += f"| {rel_path} | {file_data['type']} | {file_data['size_formatted']} | {datetime.fromisoformat(file_data['last_modified']).strftime('%Y-%m-%d %H:%M:%S')} |\n"
+        
+        # Salvar relatório com encoding UTF-8 com BOM
+        os.makedirs(os.path.dirname(report_path), exist_ok=True)
+        with open(report_path, "w", encoding="utf-8-sig") as f:
+            f.write(report)
+            
+        # Salvar também metadados em formato JSON
+        json_report_path = os.path.join(self.context["directories"]["processed"], "files_metadata.json")
+        with open(json_report_path, "w", encoding="utf-8-sig") as f:
+            json.dump({
+                "execution_id": self.context["execution_id"],
+                "repository": self.context["repo_url"],
+                "total_files": len(files),
+                "total_size": total_size,
+                "total_size_formatted": self._format_file_size(total_size),
+                "file_types": file_types,
+                "files": metadata
+            }, f, ensure_ascii=False, indent=2)
+        
+        if self.logger:
+            self.logger.info(f"Relatório de arquivos gerado em: {report_path}")
+            self.logger.info(f"Metadados JSON salvos em: {json_report_path}")
+        else:
+            console.print(f"[green]Relatório de arquivos gerado em: {report_path}[/green]")
+            console.print(f"[green]Metadados JSON salvos em: {json_report_path}[/green]")
     
     def run(self):
         """
@@ -299,11 +513,18 @@ class DownloadAgent:
             dict: Contexto atualizado com informações do download.
         """
         try:
-            console.print(f"[bold blue]Iniciando download do repositório: {self.repo_url}[/bold blue]")
+            if self.logger:
+                self.logger.info(f"Iniciando download do repositório: {self.repo_url}")
+            else:
+                console.print(f"[bold blue]Iniciando download do repositório: {self.repo_url}[/bold blue]")
             
             # Validar URL e extrair informações
             repo_info = self._validate_url()
-            console.print(f"Repositório identificado: [cyan]{repo_info['type']}[/cyan] - [cyan]{repo_info['owner']}/{repo_info['name']}[/cyan]")
+            
+            if self.logger:
+                self.logger.info(f"Repositório identificado: {repo_info['type']} - {repo_info['owner']}/{repo_info['name']}")
+            else:
+                console.print(f"Repositório identificado: [cyan]{repo_info['type']}[/cyan] - [cyan]{repo_info['owner']}/{repo_info['name']}[/cyan]")
             
             # Clonar repositório
             repo_dir = self._clone_repository(repo_info)
@@ -314,6 +535,14 @@ class DownloadAgent:
             # Atualizar contexto
             self.context["repo_info"] = repo_info
             self.context["documentation_files"] = [os.path.relpath(f, repo_dir) for f in doc_files]
+            self.context["repository_directory"] = repo_dir
+            
+            # Registro de hora de início/fim para cronometragem
+            self.context["download_stats"] = {
+                "start_time": self.context["stats"]["start_time"].isoformat(),
+                "end_time": datetime.now().isoformat(),
+                "files_count": len(doc_files)
+            }
             
             # Adicionar ao histórico, se habilitado
             if self.context["config"]["processing"]["enable_execution_history"]:
@@ -329,20 +558,14 @@ class DownloadAgent:
             self.context["stats"]["steps_completed"].append("download")
             
             return self.context
-        
+            
         except Exception as e:
-            console.print(f"[bold red]Erro durante o download: {str(e)}[/bold red]")
+            if self.logger:
+                self.logger.error(f"Erro no DownloadAgent: {str(e)}")
             
-            # Adicionar à lista de etapas com falha
-            self.context["stats"]["steps_failed"].append("download")
-            
-            # Adicionar ao histórico, se habilitado
-            if self.context["config"]["processing"]["enable_execution_history"]:
-                self.context["execution_history"].append({
-                    "type": "error",
-                    "step": "download",
-                    "error": str(e),
-                    "timestamp": self.context["stats"]["start_time"].isoformat()
-                })
-            
+            # Adicionar à lista de etapas que falharam
+            if "stats" in self.context and "steps_failed" in self.context["stats"]:
+                self.context["stats"]["steps_failed"].append("download")
+                
+            # Re-lançar exceção para ser tratada no nível superior
             raise

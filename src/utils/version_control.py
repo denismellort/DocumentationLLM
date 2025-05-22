@@ -163,6 +163,10 @@ class VersionControl:
         Returns:
             dict: Relatório da operação de rollback.
         """
+        # Verificar se o diretório base existe
+        if not os.path.exists(self.base_dir):
+            return {"success": False, "message": f"Diretório de controle de versão '{self.base_dir}' não existe."}
+
         # Encontrar versão para restaurar
         if version_id is None:
             # Se não especificado, restaurar para a versão anterior
@@ -253,8 +257,19 @@ class VersionControl:
         Lista todas as versões disponíveis.
         
         Returns:
-            list: Lista de versões disponíveis.
+            list: Lista de dicionários com informações das versões.
         """
+        # Verificar se o diretório base existe
+        if not os.path.exists(self.base_dir):
+            console.print(f"[yellow]Aviso: Diretório de controle de versão '{self.base_dir}' não existe.[/yellow]")
+            return []
+            
+        # Verificar se o arquivo de versões existe
+        if not os.path.exists(self.versions_file):
+            console.print(f"[yellow]Aviso: Arquivo de versões '{self.versions_file}' não existe.[/yellow]")
+            return []
+            
+        # Devolver lista de snapshots
         return self.versions["snapshots"]
     
     def get_current_version(self):
@@ -264,6 +279,11 @@ class VersionControl:
         Returns:
             dict: Informações sobre a versão atual.
         """
+        # Verificar se o diretório base existe
+        if not os.path.exists(self.base_dir):
+            console.print(f"[yellow]Aviso: Diretório de controle de versão '{self.base_dir}' não existe.[/yellow]")
+            return None
+            
         if not self.versions["current_version"]:
             return None
             
@@ -280,6 +300,10 @@ class VersionControl:
         Returns:
             dict: Relatório de diferenças.
         """
+        # Verificar se o diretório base existe
+        if not os.path.exists(self.base_dir):
+            return {"success": False, "message": f"Diretório de controle de versão '{self.base_dir}' não existe."}
+            
         # Encontrar primeira versão
         version1 = next((s for s in self.versions["snapshots"] if s["id"] == version_id1), None)
         if not version1:

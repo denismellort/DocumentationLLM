@@ -13,11 +13,14 @@ Este módulo fornece funcionalidades de logging avançadas, incluindo:
 import os
 import json
 import logging
+import hashlib
 from datetime import datetime
+from logging.handlers import RotatingFileHandler
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.panel import Panel
 from rich.syntax import Syntax
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 
 # Configuração global
 console = Console()
@@ -51,13 +54,21 @@ class DocumentationLogger:
         "critical": logging.CRITICAL
     }
     
+    # Tamanho máximo dos arquivos de log (10MB)
+    MAX_LOG_SIZE = 10 * 1024 * 1024
+    
+    # Número máximo de backups de logs
+    MAX_LOG_BACKUPS = 5
+    
     def __init__(self, 
                  log_level="info", 
                  enable_file_logging=False, 
                  log_dir="logs", 
                  execution_id=None,
                  enable_console=True,
-                 enable_api_logging=False):
+                 enable_api_logging=False,
+                 log_rotation=True,
+                 verbose_exceptions=True):
         """
         Inicializa o logger.
         
@@ -68,6 +79,8 @@ class DocumentationLogger:
             execution_id (str): ID da execução atual.
             enable_console (bool): Se True, habilita logs no console.
             enable_api_logging (bool): Se True, habilita logs detalhados de APIs.
+            log_rotation (bool): Se True, habilita rotação de arquivos de log.
+            verbose_exceptions (bool): Se True, exibe detalhes completos de exceções.
         """
         self.log_level = self.LEVELS.get(log_level.lower(), logging.INFO)
         self.enable_file_logging = enable_file_logging
@@ -75,6 +88,8 @@ class DocumentationLogger:
         self.execution_id = execution_id or datetime.now().strftime("%Y%m%d_%H%M%S")
         self.enable_console = enable_console
         self.enable_api_logging = enable_api_logging
+        self.log_rotation = log_rotation
+        self.verbose_exceptions = verbose_exceptions
         
         # Criar logger
         self.logger = logging.getLogger("DocumentationLLM")
@@ -82,7 +97,7 @@ class DocumentationLogger:
         self.logger.handlers = []  # Limpar handlers para evitar duplicação
         
         # Configurar formatação
-        log_format = "%(asctime)s [%(levelname)s] %(message)s"
+        log_format = "%(asctime)s [%(levelname)s] %(name)s:%(lineno)d - %(message)s"
         
         # Handler para console usando Rich
         if enable_console:
@@ -91,6 +106,7 @@ class DocumentationLogger:
                 markup=True,
                 show_path=False,
                 omit_repeated_times=False,
+                tracebacks_show_locals=verbose_exceptions,
             )
             console_handler.setLevel(self.log_level)
             self.logger.addHandler(console_handler)
@@ -100,7 +116,16 @@ class DocumentationLogger:
             os.makedirs(log_dir, exist_ok=True)
             log_file = os.path.join(log_dir, f"{self.execution_id}.log")
             
-            file_handler = logging.FileHandler(log_file, encoding="utf-8")
+            if log_rotation:
+                file_handler = RotatingFileHandler(
+                    log_file, 
+                    maxBytes=self.MAX_LOG_SIZE, 
+                    backupCount=self.MAX_LOG_BACKUPS,
+                    encoding="utf-8-sig"
+                )
+            else:
+                file_handler = logging.FileHandler(log_file, encoding="utf-8-sig")
+                
             file_handler.setLevel(self.log_level)
             file_formatter = logging.Formatter(log_format)
             file_handler.setFormatter(file_formatter)
@@ -111,16 +136,26 @@ class DocumentationLogger:
                 api_log_file = os.path.join(log_dir, f"{self.execution_id}_api.log")
                 self.api_log_file = api_log_file
                 
-                # Garantir que o arquivo existe
-                with open(api_log_file, "w", encoding="utf-8") as f:
-                    f.write(f"# API Logs - DocumentationLLM\n")
-                    f.write(f"# Execution ID: {self.execution_id}\n")
-                    f.write(f"# Start Time: {datetime.now().isoformat()}\n\n")
+                # Criar handler com rotação para API logs
+                if log_rotation:
+                    self.api_file_handler = RotatingFileHandler(
+                        api_log_file, 
+                        maxBytes=self.MAX_LOG_SIZE, 
+                        backupCount=self.MAX_LOG_BACKUPS,
+                        encoding="utf-8-sig"
+                    )
+                    # Não adicionar ao logger principal, será usado separadamente
+                else:
+                    # Garantir que o arquivo existe
+                    with open(api_log_file, "w", encoding="utf-8-sig") as f:
+                        f.write(f"# API Logs - DocumentationLLM\n")
+                        f.write(f"# Execution ID: {self.execution_id}\n")
+                        f.write(f"# Start Time: {datetime.now().isoformat()}\n\n")
                     
             # Registrar problemas conhecidos
             known_issues_file = os.path.join(log_dir, "known_issues.log")
             if not os.path.exists(known_issues_file):
-                with open(known_issues_file, "w", encoding="utf-8") as f:
+                with open(known_issues_file, "w", encoding="utf-8-sig") as f:
                     f.write("# Problemas Conhecidos - DocumentationLLM\n\n")
                     for issue in KNOWN_ISSUES:
                         f.write(f"## {issue['issue_id']}: {issue['component']}\n")
@@ -133,6 +168,41 @@ class DocumentationLogger:
                         f.write(f"- **Criado em**: {issue['created_at']}\n\n")
         else:
             self.api_log_file = None
+            
+        # Criar logger de depuração para chamadas de API
+        if enable_api_logging:
+            self.api_logger = logging.getLogger("DocumentationLLM.api")
+            self.api_logger.setLevel(logging.DEBUG)  # Sempre debug para APIs
+            self.api_logger.propagate = False  # Não propagar para o logger pai
+            
+            # Adicionar handler de arquivo se habilitado
+            if enable_file_logging and hasattr(self, 'api_file_handler'):
+                api_formatter = logging.Formatter("%(asctime)s [API] %(message)s")
+                self.api_file_handler.setFormatter(api_formatter)
+                self.api_logger.addHandler(self.api_file_handler)
+            
+            # Adicionar console handler se habilitado e em modo debug
+            if enable_console and self.log_level <= logging.DEBUG:
+                api_console_handler = RichHandler(
+                    rich_tracebacks=True,
+                    markup=True,
+                    show_path=False,
+                    omit_repeated_times=False,
+                )
+                api_console_handler.setLevel(logging.DEBUG)
+                self.api_logger.addHandler(api_console_handler)
+    
+    def get_child_logger(self, name):
+        """
+        Obtém um logger filho com um nome específico.
+        
+        Args:
+            name (str): Nome do logger filho.
+            
+        Returns:
+            logging.Logger: Logger filho.
+        """
+        return logging.getLogger(f"DocumentationLLM.{name}")
     
     def debug(self, message, *args, **kwargs):
         """Log debug message."""
@@ -193,7 +263,7 @@ class DocumentationLogger:
                 self.logger.info(f"--- {title} ---")
             self.logger.info(f"```{language}\n{code}\n```")
     
-    def log_api_call(self, api_name, endpoint, request_data, response_data=None, error=None):
+    def log_api_call(self, api_name, endpoint, request_data, response_data=None, error=None, token_count=None):
         """
         Registra detalhes de uma chamada de API.
         
@@ -203,6 +273,7 @@ class DocumentationLogger:
             request_data (dict): Dados da requisição.
             response_data (dict, optional): Dados da resposta, se disponível.
             error (Exception, optional): Erro, se ocorreu.
+            token_count (dict, optional): Contagem de tokens (input, output, total).
         """
         if not self.enable_api_logging:
             return
@@ -222,18 +293,28 @@ class DocumentationLogger:
         
         if error:
             log_entry["error"] = str(error)
+            
+        if token_count:
+            log_entry["tokens"] = token_count
         
-        # Log no console, se habilitado e em nível debug
-        if self.enable_console and self.log_level <= logging.DEBUG:
+        # Log usando o logger específico de API
+        if hasattr(self, 'api_logger'):
+            message = f"{api_name} - {endpoint}"
             if error:
-                console.print(f"[bold red]API Error: {api_name} - {endpoint}[/bold red]")
-                console.print(f"[red]{error}[/red]")
+                self.api_logger.error(f"API ERROR: {message} - {str(error)}")
             else:
-                console.print(f"[bold blue]API Call: {api_name} - {endpoint}[/bold blue]")
+                self.api_logger.debug(f"API CALL: {message}")
+                if token_count:
+                    self.api_logger.info(
+                        f"API TOKENS: {message} - " +
+                        f"Input: {token_count.get('input_tokens', 0)}, " +
+                        f"Output: {token_count.get('output_tokens', 0)}, " +
+                        f"Total: {token_count.get('total_tokens', 0)}"
+                    )
         
-        # Log em arquivo separado para APIs
-        if self.enable_file_logging and self.api_log_file:
-            with open(self.api_log_file, "a", encoding="utf-8") as f:
+        # Log em arquivo separado para APIs (método antigo, para compatibilidade)
+        if self.enable_file_logging and self.api_log_file and not hasattr(self, 'api_file_handler'):
+            with open(self.api_log_file, "a", encoding="utf-8-sig") as f:
                 f.write(f"## {timestamp} - {api_name} - {endpoint}\n\n")
                 f.write(f"### Request\n```json\n{json.dumps(request_data, indent=2, ensure_ascii=False)}\n```\n\n")
                 
@@ -242,6 +323,14 @@ class DocumentationLogger:
                 
                 if error:
                     f.write(f"### Error\n```\n{error}\n```\n\n")
+                    
+                if token_count:
+                    f.write(f"### Token Usage\n")
+                    f.write(f"- Input Tokens: {token_count.get('input_tokens', 0)}\n")
+                    f.write(f"- Output Tokens: {token_count.get('output_tokens', 0)}\n")
+                    f.write(f"- Total Tokens: {token_count.get('total_tokens', 0)}\n")
+                    if 'cost' in token_count:
+                        f.write(f"- Estimated Cost: ${token_count.get('cost', 0):.6f}\n")
                 
                 f.write("---\n\n")
         
@@ -276,6 +365,82 @@ class DocumentationLogger:
             content += f"\n\n{details}"
             
         self.log_rich(content, title="Fim de Etapa", style=style)
+        
+    def log_file_processing(self, file_path, file_size, file_type, file_hash=None, metadata=None):
+        """
+        Registra informações detalhadas sobre um arquivo processado.
+        
+        Args:
+            file_path (str): Caminho do arquivo
+            file_size (int): Tamanho do arquivo em bytes
+            file_type (str): Tipo do arquivo (ex: "markdown", "python")
+            file_hash (str, optional): Hash do arquivo para verificação
+            metadata (dict, optional): Metadados adicionais sobre o arquivo
+        """
+        # Calcular hash MD5 se não fornecido
+        if not file_hash and os.path.exists(file_path):
+            try:
+                with open(file_path, 'rb') as f:
+                    file_hash = hashlib.md5(f.read()).hexdigest()
+            except Exception as e:
+                file_hash = f"Erro ao calcular hash: {str(e)}"
+                
+        # Formatar tamanho
+        if file_size < 1024:
+            size_formatted = f"{file_size} bytes"
+        elif file_size < 1024 * 1024:
+            size_formatted = f"{file_size / 1024:.2f} KB"
+        else:
+            size_formatted = f"{file_size / (1024 * 1024):.2f} MB"
+            
+        # Obter última modificação
+        last_modified = ""
+        if os.path.exists(file_path):
+            try:
+                mtime = os.path.getmtime(file_path)
+                last_modified = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M:%S")
+            except:
+                last_modified = "Desconhecido"
+        
+        # Log básico
+        self.info(f"Arquivo processado: {os.path.basename(file_path)} ({size_formatted})")
+        
+        # Log detalhado em nível debug
+        details = [
+            f"Caminho: {file_path}",
+            f"Tamanho: {size_formatted}",
+            f"Tipo: {file_type}",
+            f"Última modificação: {last_modified}",
+            f"Hash MD5: {file_hash}"
+        ]
+        
+        if metadata:
+            for key, value in metadata.items():
+                details.append(f"{key}: {value}")
+                
+        self.debug("Detalhes do arquivo:\n" + "\n".join(f"- {d}" for d in details))
+        
+    def create_progress_bar(self, description, total=None):
+        """
+        Cria uma barra de progresso para operações de longa duração.
+        
+        Args:
+            description (str): Descrição da operação
+            total (int, optional): Total de passos (None para progresso indeterminado)
+            
+        Returns:
+            tuple: (Progress object, task_id) para atualização
+        """
+        progress = Progress(
+            SpinnerColumn(),
+            TextColumn("[bold blue]{task.description}"),
+            BarColumn(complete_style="green"),
+            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+            console=console
+        )
+        
+        task_id = progress.add_task(description, total=total)
+        return progress, task_id
         
     @staticmethod
     def get_known_issues():

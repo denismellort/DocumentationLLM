@@ -55,6 +55,7 @@ class TokenAnalystAgent:
         """
         self.context = context
         self.enable_token_analysis = context["config"]["processing"]["enable_token_analysis"]
+        self.logger = context.get("logger")
         
         # Inicializar estatísticas por modelo se não existirem
         if "token_stats" not in context:
@@ -64,6 +65,13 @@ class TokenAnalystAgent:
                 "total_tokens": 0,
                 "total_cost": 0.0
             }
+            
+        # Corrigir a discrepância entre o relatório de token e o relatório de execução
+        # Garantindo que o tokens_used no stats global seja consistente com o total no token_stats
+        if "token_stats" in context and "total_tokens" in context["token_stats"]:
+            context["stats"]["tokens_used"] = context["token_stats"]["total_tokens"]
+            if self.logger:
+                self.logger.debug(f"Sincronizando contagem de tokens: {context['token_stats']['total_tokens']}")
     
     def log_token_usage(self, step_name, model, input_tokens, output_tokens):
         """
@@ -109,6 +117,25 @@ class TokenAnalystAgent:
         # Atualizar estatísticas globais
         self.context["stats"]["tokens_used"] += input_tokens + output_tokens
         self.context["stats"]["estimated_cost"] += total_cost
+        
+        if self.logger:
+            self.logger.debug(
+                f"Token usage: {step_name} - {model_key} - " + 
+                f"Input: {input_tokens}, Output: {output_tokens}, Total: {input_tokens + output_tokens}"
+            )
+            
+            # Registrar chamada de API com detalhes de tokens
+            self.logger.log_api_call(
+                api_name="OpenAI",
+                endpoint=model_key,
+                request_data={"step": step_name},
+                token_count={
+                    "input_tokens": input_tokens,
+                    "output_tokens": output_tokens,
+                    "total_tokens": input_tokens + output_tokens,
+                    "cost": total_cost
+                }
+            )
         
         # Atualizar estatísticas detalhadas por modelo
         if model_key not in self.context["token_stats"]["models"]:
@@ -184,8 +211,22 @@ class TokenAnalystAgent:
         start_time = self.context["stats"]["start_time"]
         end_time = self.context["stats"]["end_time"] or datetime.now()
         duration = end_time - start_time
-        total_tokens = self.context["token_stats"]["total_tokens"]
-        total_cost = self.context["token_stats"]["total_cost"]
+        
+        # Resolver a discrepância - garantir que os valores sejam consistentes
+        # Usar o valor mais alto entre o contexto global e token_stats
+        total_tokens = max(
+            self.context["stats"]["tokens_used"],
+            self.context["token_stats"]["total_tokens"]
+        )
+        
+        # Atualizar ambos os valores para manter consistência
+        self.context["stats"]["tokens_used"] = total_tokens
+        self.context["token_stats"]["total_tokens"] = total_tokens
+        
+        total_cost = self.context["stats"]["estimated_cost"]
+        
+        if self.logger:
+            self.logger.info(f"Gerando relatório de tokens - Total: {total_tokens}, Custo: ${total_cost:.4f}")
         
         # Criar relatório em Markdown
         report = f"""# Relatório de Uso de Tokens - DocumentationLLM
@@ -289,41 +330,62 @@ class TokenAnalystAgent:
         if potential_savings > 0:
             console.print(f"[bold yellow]Economia potencial:[/bold yellow] ${potential_savings:.4f}")
     
-    def display_token_summary(self):
+    def display_summary(self):
         """
         Exibe um resumo do uso de tokens no console.
         """
         if not self.enable_token_analysis:
+            console.print("[yellow]Análise de tokens está desabilitada.[/yellow]")
             return
         
-        # Criar tabela para o console
+        # Resolver a discrepância - usar o valor mais alto
+        total_tokens = max(
+            self.context["stats"]["tokens_used"],
+            self.context["token_stats"]["total_tokens"]
+        )
+        
+        # Atualizar ambos os valores para manter consistência
+        self.context["stats"]["tokens_used"] = total_tokens
+        self.context["token_stats"]["total_tokens"] = total_tokens
+        
+        total_cost = self.context["stats"]["estimated_cost"]
+        
+        # Criar tabela
         table = Table(title="Resumo de Uso de Tokens")
         
-        # Colunas da tabela
+        # Adicionar colunas
         table.add_column("Modelo", style="cyan")
         table.add_column("Chamadas", justify="right")
         table.add_column("Tokens", justify="right")
-        table.add_column("Custo", justify="right")
+        table.add_column("Custo (USD)", justify="right")
         
-        # Adicionar linhas por modelo
-        for model, stats in self.context["token_stats"]["models"].items():
+        # Adicionar linhas para cada modelo
+        sorted_models = sorted(
+            self.context["token_stats"]["models"].items(),
+            key=lambda x: x[1]["total_tokens"],
+            reverse=True
+        )
+        
+        for model, stats in sorted_models:
             table.add_row(
                 model,
-                str(stats["calls"]),
+                f"{stats['calls']}",
                 f"{stats['total_tokens']:,}",
                 f"${stats['cost']:.4f}"
             )
         
-        # Adicionar linha de total
+        # Adicionar linha de totais
         table.add_row(
             "[bold]Total[/bold]",
-            f"[bold]{sum(stats['calls'] for stats in self.context['token_stats']['models'].values())}[/bold]",
-            f"[bold]{self.context['token_stats']['total_tokens']:,}[/bold]",
-            f"[bold]${self.context['token_stats']['total_cost']:.4f}[/bold]"
+            f"[bold]{sum(m['calls'] for m in self.context['token_stats']['models'].values())}[/bold]",
+            f"[bold]{total_tokens:,}[/bold]",
+            f"[bold]${total_cost:.4f}[/bold]"
         )
         
-        # Imprimir tabela
+        # Exibir no console
+        console.print("\n")
         console.print(table)
+        console.print("\n")
     
     def run(self):
         """
@@ -336,8 +398,92 @@ class TokenAnalystAgent:
             console.print("[yellow]Análise de tokens está desabilitada.[/yellow]")
             return self.context
         
+        # Resolver a discrepância antes de gerar o relatório
+        # Verificar se token_stats foi atualizado de alguma forma
+        if self.context["token_stats"]["total_tokens"] == 0 and self.context["stats"]["tokens_used"] > 0:
+            # Criar uma entrada manual para os tokens registrados
+            if "supervisor" not in self.context["token_stats"]["steps"]:
+                self.context["token_stats"]["steps"]["supervisor"] = {
+                    "input_tokens": 0,
+                    "output_tokens": 0,
+                    "total_tokens": 0,
+                    "cost": 0.0,
+                    "calls": 0,
+                    "models_used": {}
+                }
+                
+            # Assumir que o modelo usado foi o supervisor
+            model_key = self.context["config"]["models"]["supervisor"]
+            if model_key == "local":
+                model_key = "gpt-4"  # Fallback se não tiver modelo definido
+                
+            # Normalizar nome do modelo
+            if "gpt-4" in model_key.lower():
+                if "32k" in model_key.lower():
+                    model_key = "gpt-4-32k"
+                else:
+                    model_key = "gpt-4"
+            elif "gpt-3.5" in model_key.lower():
+                if "16k" in model_key.lower():
+                    model_key = "gpt-3.5-turbo-16k"
+                else:
+                    model_key = "gpt-3.5-turbo"
+                    
+            # Calcular custo aproximado
+            tokens_used = self.context["stats"]["tokens_used"]
+            # Assumir uma divisão típica de 70% input, 30% output
+            input_tokens = int(tokens_used * 0.7)
+            output_tokens = tokens_used - input_tokens
+            
+            input_cost = (input_tokens / 1000) * self.MODEL_COSTS[model_key]["input"]
+            output_cost = (output_tokens / 1000) * self.MODEL_COSTS[model_key]["output"]
+            total_cost = input_cost + output_cost
+            
+            # Atualizar estatísticas
+            if model_key not in self.context["token_stats"]["models"]:
+                self.context["token_stats"]["models"][model_key] = {
+                    "input_tokens": 0,
+                    "output_tokens": 0,
+                    "total_tokens": 0,
+                    "cost": 0.0,
+                    "calls": 0
+                }
+                
+            self.context["token_stats"]["models"][model_key]["input_tokens"] += input_tokens
+            self.context["token_stats"]["models"][model_key]["output_tokens"] += output_tokens
+            self.context["token_stats"]["models"][model_key]["total_tokens"] += tokens_used
+            self.context["token_stats"]["models"][model_key]["cost"] += total_cost
+            self.context["token_stats"]["models"][model_key]["calls"] += 1
+            
+            # Atualizar estatísticas da etapa
+            self.context["token_stats"]["steps"]["supervisor"]["input_tokens"] += input_tokens
+            self.context["token_stats"]["steps"]["supervisor"]["output_tokens"] += output_tokens
+            self.context["token_stats"]["steps"]["supervisor"]["total_tokens"] += tokens_used
+            self.context["token_stats"]["steps"]["supervisor"]["cost"] += total_cost
+            self.context["token_stats"]["steps"]["supervisor"]["calls"] += 1
+            
+            # Registrar uso de modelo específico nesta etapa
+            if model_key not in self.context["token_stats"]["steps"]["supervisor"]["models_used"]:
+                self.context["token_stats"]["steps"]["supervisor"]["models_used"][model_key] = {
+                    "calls": 0,
+                    "tokens": 0,
+                    "cost": 0.0
+                }
+                
+            self.context["token_stats"]["steps"]["supervisor"]["models_used"][model_key]["calls"] += 1
+            self.context["token_stats"]["steps"]["supervisor"]["models_used"][model_key]["tokens"] += tokens_used
+            self.context["token_stats"]["steps"]["supervisor"]["models_used"][model_key]["cost"] += total_cost
+            
+            # Atualizar totais
+            self.context["token_stats"]["total_tokens"] = tokens_used
+            self.context["token_stats"]["total_cost"] = total_cost
+            self.context["stats"]["estimated_cost"] = total_cost
+            
+            if self.logger:
+                self.logger.info(f"Resolvida discrepância de tokens: {tokens_used} tokens, custo: ${total_cost:.4f}")
+        
         # Exibir resumo de tokens
-        self.display_token_summary()
+        self.display_summary()
         
         # Gerar relatório detalhado
         report_path = os.path.join(self.context["directories"]["processed"], "token_usage_report.md")

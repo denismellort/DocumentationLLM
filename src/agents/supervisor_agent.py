@@ -13,6 +13,14 @@ import time
 from datetime import datetime
 import openai
 from rich.console import Console
+from rich.panel import Panel
+
+# Importar funções de segurança usando importação absoluta
+try:
+    from src.utils.security import sanitize_prompt
+except ImportError:
+    # Fallback para importação relativa para desenvolvimento
+    from ..utils.security import sanitize_prompt
 
 console = Console()
 
@@ -35,6 +43,7 @@ class SupervisorAgent:
         self.enable_supervision = context["config"]["processing"]["enable_supervision"]
         self.enable_history = context["config"]["processing"]["enable_execution_history"]
         self.client = openai.OpenAI()
+        self.logger = context.get("logger")
         
         # Criar histórico de execução se habilitado
         if self.enable_history and "execution_history" not in context:
@@ -66,6 +75,9 @@ class SupervisorAgent:
             # Preparar o prompt para o modelo de supervisão
             prompt = self._prepare_validation_prompt(step_name, step_result, agent_notes)
             
+            if self.logger:
+                self.logger.debug(f"Validando etapa: {step_name}")
+            
             # Registrar tokens usados para o prompt
             prompt_tokens = len(prompt.split()) * 1.3  # Estimativa simples
             
@@ -73,13 +85,19 @@ class SupervisorAgent:
             if self.model.lower() != "local":
                 start_time = time.time()
                 
-                # Chamar a API da OpenAI (versão atualizada)
+                # Sanitizar prompt para evitar injeção
+                sanitized_prompt = sanitize_prompt(prompt)
+                
+                # Preparar mensagens para a API
+                messages = [
+                    {"role": "system", "content": "Você é um agente supervisor que valida etapas de processamento de documentação, fornecendo feedback construtivo e sugestões de melhoria."},
+                    {"role": "user", "content": sanitized_prompt}
+                ]
+                
+                # Chamar a API da OpenAI
                 response = self.client.chat.completions.create(
                     model=self.model,
-                    messages=[
-                        {"role": "system", "content": "Você é um agente supervisor que valida etapas de processamento de documentação, fornecendo feedback construtivo e sugestões de melhoria."},
-                        {"role": "user", "content": prompt}
-                    ],
+                    messages=messages,
                     max_tokens=self.max_tokens,
                     temperature=0.1
                 )
@@ -88,22 +106,64 @@ class SupervisorAgent:
                 ai_feedback = response.choices[0].message.content
                 
                 # Calcular tokens e custo
+                prompt_tokens = response.usage.prompt_tokens
                 completion_tokens = response.usage.completion_tokens
                 total_tokens = response.usage.total_tokens
                 
-                # Atualizar estatísticas
-                self.context["stats"]["tokens_used"] += total_tokens
+                # Registrar uso de API com logger se disponível
+                if self.logger:
+                    self.logger.log_api_call(
+                        api_name="OpenAI",
+                        endpoint=self.model,
+                        request_data={"step": step_name, "action": "validation"},
+                        response_data={"content_length": len(ai_feedback)},
+                        token_count={
+                            "input_tokens": prompt_tokens,
+                            "output_tokens": completion_tokens,
+                            "total_tokens": total_tokens
+                        }
+                    )
                 
-                # Calcular custo estimado (pode ser ajustado conforme modelo)
-                cost_per_1k = 0.06 if "gpt-4" in self.model else 0.002  # Exemplo simplificado
-                estimated_cost = (total_tokens / 1000) * cost_per_1k
-                self.context["stats"]["estimated_cost"] += estimated_cost
+                # Verificar e registrar análise de tokens
+                if "token_stats" in self.context and hasattr(self.context.get("agents", {}).get("token_analyst"), "log_token_usage"):
+                    token_analyst = self.context["agents"].get("token_analyst")
+                    token_usage = token_analyst.log_token_usage(
+                        step_name=f"validation_{step_name}", 
+                        model=self.model, 
+                        input_tokens=prompt_tokens, 
+                        output_tokens=completion_tokens
+                    )
+                else:
+                    # Atualizar estatísticas internas
+                    self.context["stats"]["tokens_used"] += total_tokens
+                    
+                    # Calcular custo estimado (pode ser ajustado conforme modelo)
+                    cost_per_1k_input = 0.03 if "gpt-4" in self.model.lower() else 0.0015  # Valor aproximado
+                    cost_per_1k_output = 0.06 if "gpt-4" in self.model.lower() else 0.002  # Valor aproximado
+                    input_cost = (prompt_tokens / 1000) * cost_per_1k_input
+                    output_cost = (completion_tokens / 1000) * cost_per_1k_output
+                    estimated_cost = input_cost + output_cost
+                    self.context["stats"]["estimated_cost"] += estimated_cost
+                    
+                    token_usage = {
+                        "model": self.model,
+                        "input_tokens": prompt_tokens,
+                        "output_tokens": completion_tokens,
+                        "total_tokens": total_tokens,
+                        "cost": estimated_cost
+                    }
                 
                 # Parsear resposta
                 validation_result = self._parse_validation_response(ai_feedback)
                 validation_result["tokens_used"] = total_tokens
-                validation_result["cost"] = estimated_cost
+                validation_result["cost"] = token_usage.get("cost", 0)
                 validation_result["execution_time"] = time.time() - start_time
+                
+                if self.logger:
+                    self.logger.info(f"Etapa {step_name} validada: {'✓' if validation_result['valid'] else '✗'}")
+                    if not validation_result['valid']:
+                        self.logger.warning(f"Feedback: {validation_result['feedback']}")
+                        
             else:
                 # Supervisão local (simplificada)
                 validation_result = {
@@ -114,6 +174,9 @@ class SupervisorAgent:
                     "cost": 0,
                     "execution_time": 0
                 }
+                
+                if self.logger:
+                    self.logger.info(f"Etapa {step_name} validada localmente (modo local)")
             
             # Adicionar metadados à validação
             validation_result["step_name"] = step_name
@@ -140,10 +203,17 @@ class SupervisorAgent:
         
         except Exception as e:
             # Em caso de erro, registrar e retornar validação básica
+            error_message = f"Erro durante validação: {str(e)}"
+            
+            if self.logger:
+                self.logger.error(error_message)
+            else:
+                console.print(f"[bold red]{error_message}[/bold red]")
+                
             error_result = {
                 "step_name": step_name,
                 "valid": False,
-                "feedback": f"Erro durante validação: {str(e)}",
+                "feedback": error_message,
                 "suggestions": ["Verificar logs para mais detalhes"],
                 "timestamp": datetime.now().isoformat(),
                 "error": str(e)
@@ -252,6 +322,9 @@ Responda no seguinte formato:
         
         except json.JSONDecodeError:
             # Fallback para resposta não estruturada
+            if self.logger:
+                self.logger.warning("Não foi possível parsear a resposta estruturada da validação")
+                
             return {
                 "valid": True,  # Assume sucesso para evitar interrupções
                 "feedback": "Não foi possível parsear a resposta estruturada",
@@ -282,6 +355,14 @@ Responda no seguinte formato:
             decision["details"] = details
         
         self.context["execution_history"].append(decision)
+        
+        if self.logger:
+            log_message = f"Decisão ({decision_type}): {description}"
+            self.logger.info(log_message)
+            
+            if details:
+                detail_str = ", ".join([f"{k}: {v}" for k, v in details.items()])
+                self.logger.debug(f"Detalhes da decisão: {detail_str}")
     
     @staticmethod
     def generate_report(context, output_path):
@@ -296,10 +377,49 @@ Responda no seguinte formato:
         start_time = context["stats"]["start_time"]
         end_time = context["stats"]["end_time"] or datetime.now()
         duration = end_time - start_time
-        tokens_used = context["stats"]["tokens_used"]
+        
+        # Obter valores de tokens e custo (garantindo consistência)
+        if "token_stats" in context and "total_tokens" in context["token_stats"]:
+            tokens_used = max(context["stats"]["tokens_used"], context["token_stats"]["total_tokens"])
+            # Atualizar ambos para consistência
+            context["stats"]["tokens_used"] = tokens_used
+            context["token_stats"]["total_tokens"] = tokens_used
+        else:
+            tokens_used = context["stats"]["tokens_used"]
+            
         estimated_cost = context["stats"]["estimated_cost"]
         steps_completed = context["stats"]["steps_completed"]
         steps_failed = context["stats"]["steps_failed"]
+        
+        # Adicionar informações de metadados/estatísticas de arquivos processados
+        file_stats = {}
+        if "documentation_files_metadata" in context:
+            metadata = context["documentation_files_metadata"]
+            total_files = len(metadata)
+            total_size = sum(file_data.get("size", 0) for file_data in metadata.values())
+            
+            # Calcular tamanho formatado
+            if total_size < 1024:
+                size_formatted = f"{total_size} bytes"
+            elif total_size < 1024 * 1024:
+                size_formatted = f"{total_size / 1024:.2f} KB"
+            else:
+                size_formatted = f"{total_size / (1024 * 1024):.2f} MB"
+                
+            # Calcular distribuição por tipo
+            file_types = {}
+            for file_data in metadata.values():
+                file_type = file_data.get("type", "unknown")
+                if file_type not in file_types:
+                    file_types[file_type] = 0
+                file_types[file_type] += 1
+                
+            file_stats = {
+                "total_files": total_files,
+                "total_size": total_size,
+                "size_formatted": size_formatted,
+                "file_types": file_types
+            }
         
         # Criar relatório em Markdown
         report = f"""# Relatório de Execução - DocumentationLLM
@@ -314,7 +434,25 @@ Responda no seguinte formato:
 - **Tokens Utilizados:** {tokens_used}
 - **Custo Estimado:** ${estimated_cost:.4f}
 
-## Resumo de Etapas
+"""
+
+        # Adicionar estatísticas de arquivos se disponíveis
+        if file_stats:
+            report += f"""## Estatísticas de Arquivos
+
+- **Total de Arquivos:** {file_stats["total_files"]}
+- **Tamanho Total:** {file_stats["size_formatted"]}
+
+### Distribuição por Tipo
+| Tipo de Arquivo | Quantidade |
+|----------------|------------|
+"""
+            for file_type, count in sorted(file_stats["file_types"].items(), key=lambda x: x[1], reverse=True):
+                report += f"| {file_type} | {count} |\n"
+                
+            report += "\n"
+
+        report += f"""## Resumo de Etapas
 
 ### Etapas Concluídas ({len(steps_completed)})
 {chr(10).join([f"- {step}" for step in steps_completed])}
@@ -400,6 +538,11 @@ scaling:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         with open(output_path, "w", encoding="utf-8-sig") as f:
             f.write(report)
+            
+        # Log com o logger se disponível
+        logger = context.get("logger")
+        if logger:
+            logger.info(f"Relatório de execução gerado: {output_path}")
     
     @staticmethod
     def save_history(context, output_path):
@@ -441,6 +584,11 @@ scaling:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         with open(output_path, "w", encoding="utf-8-sig") as f:
             json.dump(history, f, ensure_ascii=False, indent=2)
+            
+        # Log com o logger se disponível
+        logger = context.get("logger")
+        if logger:
+            logger.info(f"Histórico de execução salvo: {output_path}")
     
     def run(self):
         """

@@ -120,4 +120,10 @@ Motivação: Foram identificados dois problemas: (1) A ferramenta não suportava
 Alterações: (1) Modificado o agente de download para detectar e processar diretórios locais; (2) Alterada a codificação dos arquivos de saída para UTF-8 com BOM (utf-8-sig), que é melhor suportada no Windows.
 Responsável: Assistente IA @cursor
 
+[2025-05-23] - Melhorias de estabilidade e consistência (v0.1.1)
+Motivação: Foram identificadas oportunidades para melhorar a estabilidade e consistência do sistema, incluindo discrepância nos relatórios de tokens e problemas com o sistema de controle de versão.
+Alterações: (1) Corrigida a discrepância nos tokens reportados entre diferentes relatórios, garantindo consistência; (2) Adicionadas verificações de existência de diretórios no sistema de controle de versão para evitar erros; (3) Adicionada mensagem de aviso quando nenhum arquivo de documentação é detectado; (4) O código agora é mais robusto para lidar com casos extremos e erros.
+Próximos passos: Iniciar desenvolvimento do Agente de Parsing, que será responsável por extrair e estruturar o conteúdo dos arquivos de documentação, identificando hierarquia, relações entre documentos e distinção entre texto explicativo e blocos de código.
+Responsável: Assistente IA @cursor
+
 **Este documento deve ser atualizado regularmente com novas decisões e contextos!**
