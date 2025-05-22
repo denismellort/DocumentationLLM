@@ -115,4 +115,9 @@ Responsável: @usuario
 Motivação: Criado wrapper `documentationllm.cli`, ajustados imports em `src/main.py`, incluído `py_modules=["main"]` no `setup.py`. O comando `docllm --help` agora funciona no ambiente virtual, confirmando a resolução.
 Responsável: Assistente IA @cursor
 
+[2025-05-22] - Correção de problemas com caminhos relativos e codificação UTF-8 no Windows
+Motivação: Foram identificados dois problemas: (1) A ferramenta não suportava caminhos relativos para repositórios locais, aceitando apenas URLs Git completas; (2) Havia problemas de codificação em sistemas Windows, onde caracteres Unicode nos relatórios apareciam incorretamente (ex: "RelatÃ³rio" em vez de "Relatório").
+Alterações: (1) Modificado o agente de download para detectar e processar diretórios locais; (2) Alterada a codificação dos arquivos de saída para UTF-8 com BOM (utf-8-sig), que é melhor suportada no Windows.
+Responsável: Assistente IA @cursor
+
 **Este documento deve ser atualizado regularmente com novas decisões e contextos!**

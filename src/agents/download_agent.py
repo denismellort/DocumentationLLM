@@ -45,6 +45,25 @@ class DownloadAgent:
         Returns:
             dict: Informações sobre o repositório (tipo, owner, nome, etc).
         """
+        # Verificar se é um caminho local
+        if os.path.exists(self.repo_url) or os.path.exists(os.path.abspath(self.repo_url)):
+            # Determinar o caminho absoluto
+            abs_path = os.path.abspath(self.repo_url)
+            
+            # Verificar se é um diretório
+            if os.path.isdir(abs_path):
+                repo_name = os.path.basename(abs_path)
+                
+                return {
+                    "url": abs_path,
+                    "type": "local",
+                    "hostname": "local",
+                    "path": abs_path,
+                    "owner": "local",
+                    "name": repo_name,
+                    "branch": None
+                }
+        
         # Validar URL básica
         parsed_url = urlparse(self.repo_url)
         if not parsed_url.scheme or not parsed_url.netloc:
@@ -120,6 +139,11 @@ class DownloadAgent:
         Returns:
             str: Caminho para o repositório clonado.
         """
+        # Verificar se é um repositório local
+        if repo_info["type"] == "local":
+            console.print(f"[green]Repositório local encontrado em: {repo_info['url']}[/green]")
+            return repo_info["url"]
+        
         # Limpar diretório temporário, se existir
         if os.path.exists(self.temp_dir):
             shutil.rmtree(self.temp_dir)

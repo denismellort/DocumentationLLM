@@ -396,9 +396,9 @@ scaling:
                     report += f"### {timestamp} - Erro de validação na etapa: {step}\n\n"
                     report += f"**Erro:** {error}\n\n"
         
-        # Salvar relatório
+        # Salvar relatório - Modificado para garantir codificação correta no Windows
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        with open(output_path, "w", encoding="utf-8") as f:
+        with open(output_path, "w", encoding="utf-8-sig") as f:
             f.write(report)
     
     @staticmethod
@@ -437,9 +437,9 @@ scaling:
                 "entries": context["execution_history"]
             }
         
-        # Salvar histórico
+        # Salvar histórico - Modificado para garantir codificação correta no Windows
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        with open(output_path, "w", encoding="utf-8") as f:
+        with open(output_path, "w", encoding="utf-8-sig") as f:
             json.dump(history, f, ensure_ascii=False, indent=2)
     
     def run(self):

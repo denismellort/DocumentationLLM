@@ -107,6 +107,18 @@ Este arquivo contém um registro de tarefas a serem implementadas e bugs a serem
 - [⚠️] O agente de análise de tokens não está registrando tokens usados corretamente
 - [ ] Problemas com encodings em alguns sistemas operacionais
 - [✓] Problema: CLI `docllm` falha com `ModuleNotFoundError` - Resolvido criando wrapper documentationllm.cli
+- [✓] Codificação incorreta de caracteres Unicode em relatórios no Windows (exibindo "RelatÃ³rio" em vez de "Relatório") - Resolvido usando UTF-8 com BOM
+- [✓] Caminho relativo para repositórios não funciona (apenas URLs de Git completas são aceitas) - Resolvido com suporte a diretórios locais
+- [ ] Discrepância nos tokens reportados (relatório de token mostra 0 enquanto relatório de execução mostra 433)
+
+## Melhorias Propostas
+
+- [✓] Adicionar suporte completo para caminhos relativos de repositórios locais
+- [✓] Corrigir problemas de codificação em sistemas Windows
+- [ ] Implementar a etapa de parsing de documentação (atualmente apenas download funciona)
+- [ ] Adicionar mais detalhes nos relatórios sobre arquivos processados (nome, tamanho, tipo)
+- [ ] Registrar corretamente o tempo de execução de cada etapa para otimização
+- [ ] Melhorar a detecção de codificação UTF-8 nos relatórios gerados
 
 ---
 

@@ -276,9 +276,9 @@ class TokenAnalystAgent:
             for desc in savings_description:
                 report += f"{desc}\n"
         
-        # Salvar relatório
+        # Salvar relatório - Modificado para garantir codificação correta no Windows
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        with open(output_path, "w", encoding="utf-8") as f:
+        with open(output_path, "w", encoding="utf-8-sig") as f:
             f.write(report)
         
         # Imprimir resumo no console
