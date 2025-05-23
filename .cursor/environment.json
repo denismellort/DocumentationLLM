@@ -1,0 +1,15 @@
+{
+    "user": "ubuntu",
+    "install": "./.cursor/install.sh",
+    "start": "",
+    "terminals": [
+      {
+        "name": "main",
+        "command": "cd /workspaces/DocumentationLLM && echo 'Terminal inicializado'",
+        "description": "Terminal principal para o projeto DocumentationLLM"
+      }
+    ],
+    "env": {
+      "OPENAI_API_KEY": "${OPENAI_API_KEY}"
+    }
+  }
