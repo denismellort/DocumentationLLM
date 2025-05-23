@@ -214,3 +214,18 @@ docllm --help
 - Sempre leia os arquivos de contexto após o clone.
 - Documente qualquer erro ou comportamento inesperado aqui.
 - Siga a ordem do README.md para garantir reprodutibilidade.
+
+## [Comandos e Instruções para Versionamento no GitHub]
+
+Para garantir que alterações locais sejam corretamente versionadas e enviadas ao repositório remoto, utilize sempre a seguinte sequência de comandos (PowerShell):
+
+```powershell
+git add .
+git commit -m "docs:registro-execucao-automatizada-AAAA-MM-DD-HHMM-UTC-3-orientacoes-agentes-instrucoes-versionamento"
+git push
+```
+
+- Evite usar acentuação e mensagens longas no commit para evitar problemas de encoding no terminal.
+- Sempre verifique com `git status` se há arquivos pendentes antes de commitar.
+- Use `git log -1` para conferir o último commit e garantir que está sincronizado com o remoto.
+- Após o push, confirme no GitHub se o commit está visível.
