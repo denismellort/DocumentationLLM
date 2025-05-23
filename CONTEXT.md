@@ -181,7 +181,7 @@ Responsável: Assistente IA @cursor
 - O projeto deve manter memória, histórico e instruções para que qualquer GPT (ou humano) possa continuar o desenvolvimento exatamente de onde parou.
 - Se ainda não aplicado, este conceito deve ser implementado futuramente.
 
-## [Registro de Execução Automatizada - Data/Hora: 2024-05-23 14:00 UTC-3]
+## [Registro de Execução Automatizada - Data/Hora: 2025-05-23 17:31:11 GMT-3]
 
 - Setup executado automaticamente por agente (exemplo: GPT-4, background agent, etc.)
 - Fluxo seguido:
@@ -221,11 +221,11 @@ Para garantir que alterações locais sejam corretamente versionadas e enviadas 
 
 ```powershell
 git add .
-git commit -m "docs:registro-execucao-automatizada-AAAA-MM-DD-HHMM-UTC-3-orientacoes-agentes-instrucoes-versionamento"
+git commit -m "docs: Registro de execução automatizada em 2025-05-23 17:31:11 GMT-3 e atualização de instruções de versionamento"
 git push
 ```
 
-- Evite usar acentuação e mensagens longas no commit para evitar problemas de encoding no terminal.
+- Use uma mensagem de commit clara, legível e com data/hora real do Brasil (GMT-3).
 - Sempre verifique com `git status` se há arquivos pendentes antes de commitar.
 - Use `git log -1` para conferir o último commit e garantir que está sincronizado com o remoto.
-- Após o push, confirme no GitHub se o commit está visível.
+- Após o push, confirme visualmente no terminal e no GitHub se o commit está visível e atualizado.
