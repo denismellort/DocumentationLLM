@@ -40,9 +40,13 @@ data/temp/*
 # Relatórios, históricos e outputs
 *.md
 *.json
-!.cursor/*.json
+!.cursor/*.json.template
 *.csv
 *.log
+
+# Ignorar arquivos com chaves reais do Cursor
+.cursor/environment.json
+.cursor/cursor.json
 
 # Logs
 logs/*
