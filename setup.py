@@ -14,7 +14,6 @@ setup(
     url="https://github.com/yourusername/documentationllm",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
-    py_modules=["main"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

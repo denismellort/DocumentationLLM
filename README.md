@@ -119,6 +119,34 @@ Ver todas as opções disponíveis:
 docllm --help
 ```
 
+## Uso Correto do Pipeline (Cross-Platform)
+
+- Sempre execute o pipeline via CLI usando o comando `docllm` após instalar o pacote:
+  ```bash
+  docllm --repo https://github.com/usuario/repositorio --verbose
+  ```
+- **Nunca execute `main.py` diretamente**. Isso pode causar erros de importação, especialmente em Linux/Mac.
+- O comando `docllm` garante que todos os imports e paths estejam corretos, independente do sistema operacional.
+
+## Troubleshooting: Erros Comuns de Importação
+
+- **Erro:** `attempted relative import beyond top-level package`
+  - **Causa:** Tentativa de rodar `main.py` diretamente, fora do contexto do pacote.
+  - **Solução:** Sempre use o comando `docllm` no terminal, nunca rode `python main.py`.
+
+- **Erro:** `ModuleNotFoundError` para agentes ou utils
+  - **Causa:** Instalação incompleta ou execução fora do ambiente virtual.
+  - **Solução:**
+    1. Ative o ambiente virtual (`venv`).
+    2. Reinstale o pacote: `pip install .`
+    3. Execute novamente via `docllm`.
+
+- **Erro:** `docllm: command not found`
+  - **Causa:** O diretório de scripts do Python não está no PATH.
+  - **Solução:**
+    - No Linux/Mac: adicione `~/.local/bin` ao PATH.
+    - No Windows: adicione o caminho do Scripts do venv ao PATH.
+
 ## Recursos Destacados
 
 - **Detecção Inteligente de Documentação**: O sistema identifica automaticamente arquivos de documentação independente da estrutura do repositório
