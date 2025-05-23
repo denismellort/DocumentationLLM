@@ -138,6 +138,9 @@ def run_pipeline(context):
             subtitle=f"ID: {context['execution_id']}"
         ))
     
+    # Criar uma referência para o agente de download para limpeza posterior
+    download_agent = None
+    
     try:
         # 1. Download do repositório
         if logger:
@@ -256,6 +259,20 @@ def run_pipeline(context):
         return False
     
     finally:
+        # Limpar arquivos temporários de download
+        if download_agent is not None:
+            try:
+                if logger:
+                    logger.info("Limpando arquivos temporários...")
+                else:
+                    print("Limpando arquivos temporários...")
+                download_agent.cleanup()
+            except Exception as cleanup_error:
+                if logger:
+                    logger.warning(f"Erro ao limpar arquivos temporários: {str(cleanup_error)}")
+                else:
+                    print(f"Aviso: Erro ao limpar arquivos temporários: {str(cleanup_error)}")
+        
         # Gerar relatórios de execução, se habilitado
         if context["config"]["processing"]["enable_execution_history"]:
             report_path = os.path.join(context["directories"]["processed"], "execution_report.md")
@@ -524,8 +541,18 @@ def main():
         
         return 1
     
-    # Configurar ambiente
-    config = load_config(args.config)
+    # Configurar ambiente - tentar usar o arquivo de configuração padrão se não especificado
+    config_path = args.config
+    if not config_path:
+        default_config = os.path.join(os.path.dirname(__file__), '..', 'config.yaml')
+        if os.path.exists(default_config):
+            if logger:
+                logger.info(f"Usando arquivo de configuração padrão: {default_config}")
+            else:
+                print(f"Usando arquivo de configuração padrão: {default_config}")
+            config_path = default_config
+    
+    config = load_config(config_path)
     
     if logger:
         logger.info("Configuração carregada")

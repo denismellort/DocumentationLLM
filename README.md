@@ -64,6 +64,12 @@ GOOGLE_API_KEY=sua-chave-aqui
 FIRECRAWL_API_KEY=sua-chave-aqui
 ```
 
+Caso não exista um arquivo `.env.example`, crie o arquivo `.env` diretamente com pelo menos a sua chave da OpenAI:
+
+```
+OPENAI_API_KEY=sua-chave-aqui
+```
+
 ---
 
 ### Passo 4: Instale as Dependências
@@ -88,10 +94,35 @@ Após a instalação como pacote, você poderá:
 
 - Usar o comando `docllm` diretamente no terminal:
   ```bash
-  docllm --help
+  docllm --repo https://github.com/usuario/repositorio --verbose
   ```
+
 - Importar o projeto em outros scripts Python
 - Rodar sem precisar de caminhos absolutos
+
+### Exemplos de Uso
+
+Processar documentação de um repositório GitHub:
+```bash
+docllm --repo https://github.com/openai/openai-python
+```
+
+Processar um subdiretório específico:
+```bash
+docllm --repo https://github.com/microsoft/playwright/tree/main/docs/
+```
+
+Ver todas as opções disponíveis:
+```bash
+docllm --help
+```
+
+## Recursos Destacados
+
+- **Detecção Inteligente de Documentação**: O sistema identifica automaticamente arquivos de documentação independente da estrutura do repositório
+- **Suporte a Múltiplos Formatos**: Processa Markdown (.md, .mdx), reStructuredText, HTML, YAML, JSON e outros formatos 
+- **Análise de Tokens**: Monitoramento detalhado do uso e custos de tokens
+- **Otimização de Recursos**: Limpeza automática de arquivos temporários
 
 ---
 
@@ -106,3 +137,37 @@ Após a instalação como pacote, você poderá:
   ```bash
   pip install . --upgrade
   ``` 
+
+- O arquivo de configuração `config.yaml` na raiz é carregado por padrão, você pode sobreescrevê-lo com a opção `--config`:
+  ```bash
+  docllm --repo https://github.com/exemplo/repo --config caminho/para/config.yaml
+  ``` 
+
+## Organização dos Dados e Limpeza
+
+A partir da versão X.X.X, o DocumentationLLM organiza os repositórios baixados da seguinte forma:
+
+- `data/originals/<nome-repositorio>/` — repositório clonado, sempre atualizado (apaga o anterior se repetir)
+- `data/temp/<nome-repositorio>/` — cópia temporária para processamento (limpa ao final)
+- `data/processed/<nome-repositorio>/` — resultados processados, relatórios, etc.
+
+**Apenas os arquivos `.gitkeep` são versionados nestas pastas.**
+
+### Limpeza e Reprodutibilidade
+
+- Para garantir reprodutibilidade, apague todo o conteúdo de `data/originals/`, `data/temp/` e `data/processed/` (exceto `.gitkeep`) antes de rodar novamente.
+- O pipeline apaga automaticamente o clone anterior de um repositório antes de baixar novamente.
+- O usuário pode inspecionar manualmente os clones em `data/originals/` para garantir que o download foi bem-sucedido.
+
+### .gitignore
+
+O projeto inclui um `.gitignore` robusto que impede o versionamento de arquivos de dados, temporários, outputs e relatórios. Apenas a estrutura de pastas é mantida no repositório.
+
+### Exemplo de fluxo limpo
+
+```bash
+# Limpe os dados antigos (exceto .gitkeep)
+rm -rf data/originals/* data/temp/* data/processed/*
+# Rode o pipeline normalmente
+python src/main.py --repo https://github.com/openai/openai-python
+``` 

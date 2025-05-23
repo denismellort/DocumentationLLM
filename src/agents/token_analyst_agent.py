@@ -398,6 +398,22 @@ class TokenAnalystAgent:
             console.print("[yellow]Análise de tokens está desabilitada.[/yellow]")
             return self.context
         
+        # Verificar se há tokens para analisar
+        if self.context["token_stats"]["total_tokens"] == 0 and self.context["stats"]["tokens_used"] == 0:
+            # Zeramos o custo estimado quando não há tokens
+            self.context["stats"]["estimated_cost"] = 0.0
+            self.context["token_stats"]["total_cost"] = 0.0
+            console.print("[yellow]Nenhum token registrado para análise.[/yellow]")
+            
+            # Exibir resumo mesmo assim
+            self.display_summary()
+            
+            # Gerar relatório
+            report_path = os.path.join(self.context["directories"]["processed"], "token_usage_report.md")
+            self.generate_token_report(report_path)
+            
+            return self.context
+        
         # Resolver a discrepância antes de gerar o relatório
         # Verificar se token_stats foi atualizado de alguma forma
         if self.context["token_stats"]["total_tokens"] == 0 and self.context["stats"]["tokens_used"] > 0:

@@ -165,90 +165,51 @@ class DownloadAgent:
     
     def _clone_repository(self, repo_info):
         """
-        Clona o repositório Git para o diretório temporário.
-        
+        Clona o repositório Git para o diretório originals/<nome-repositorio> e temp/<nome-repositorio>.
+        Apaga o clone anterior se já existir.
         Args:
             repo_info (dict): Informações sobre o repositório.
-        
         Returns:
             str: Caminho para o repositório clonado.
         """
-        # Verificar se é um repositório local
-        if repo_info["type"] == "local":
-            if self.logger:
-                self.logger.info(f"Repositório local encontrado em: {repo_info['url']}")
-            else:
-                console.print(f"[green]Repositório local encontrado em: {repo_info['url']}[/green]")
-            return repo_info["url"]
-        
-        # Limpar diretório temporário, se existir
-        if os.path.exists(self.temp_dir):
-            shutil.rmtree(self.temp_dir)
-        
-        os.makedirs(self.temp_dir, exist_ok=True)
-        
-        # Determinar o diretório para o clone
+        # Determinar o nome do repositório
         repo_name = repo_info["name"] or "unknown_repo"
-        
-        # Sanitizar nome do repositório para segurança
         repo_name = sanitize_filename(repo_name)
-        
-        clone_dir = os.path.join(self.temp_dir, repo_name)
-        
-        # Clonar o repositório
+        # Diretórios alvo
+        originals_dir = os.path.join(self.context["config"]["directories"]["originals"], repo_name)
+        temp_dir = os.path.join(self.context["config"]["directories"]["temp"], repo_name)
+        # Apagar clones anteriores
+        if os.path.exists(originals_dir):
+            shutil.rmtree(originals_dir)
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+        os.makedirs(originals_dir, exist_ok=True)
+        os.makedirs(temp_dir, exist_ok=True)
+        # Clonar no originals_dir
         with Progress(
             SpinnerColumn(),
             TextColumn("[bold blue]Clonando repositório... [/bold blue]"),
             console=console
         ) as progress:
             progress.add_task("clone", total=None)
-            
             try:
-                # Clonar apenas o branch especificado e com profundidade 1 para economia de tempo/espaço
                 Repo.clone_from(
                     repo_info["url"],
-                    clone_dir,
+                    originals_dir,
                     branch=repo_info["branch"],
                     depth=1
                 )
-                
                 if self.logger:
-                    self.logger.info(f"Repositório clonado com sucesso em: {clone_dir}")
+                    self.logger.info(f"Repositório clonado com sucesso em: {originals_dir}")
                 else:
-                    console.print(f"[green]Repositório clonado com sucesso em: {clone_dir}[/green]")
-                    
-                return clone_dir
-            
+                    console.print(f"[green]Repositório clonado com sucesso em: {originals_dir}[/green]")
+                # Copiar para temp_dir para processamento isolado
+                shutil.copytree(originals_dir, temp_dir, dirs_exist_ok=True)
+                return temp_dir
             except GitCommandError as e:
-                # Tentar clonar sem especificar branch, caso o anterior falhe
-                if "Remote branch not found" in str(e):
-                    if self.logger:
-                        self.logger.warning(f"Branch '{repo_info['branch']}' não encontrada. Tentando clonar a branch padrão...")
-                    else:
-                        console.print(f"[yellow]Branch '{repo_info['branch']}' não encontrada. Tentando clonar a branch padrão...[/yellow]")
-                    
-                    try:
-                        Repo.clone_from(
-                            repo_info["url"],
-                            clone_dir,
-                            depth=1
-                        )
-                        
-                        if self.logger:
-                            self.logger.info(f"Repositório clonado com sucesso em: {clone_dir}")
-                        else:
-                            console.print(f"[green]Repositório clonado com sucesso em: {clone_dir}[/green]")
-                            
-                        return clone_dir
-                    
-                    except GitCommandError as e2:
-                        if self.logger:
-                            self.logger.error(f"Falha ao clonar repositório: {str(e2)}")
-                        raise ValueError(f"Falha ao clonar repositório: {str(e2)}")
-                else:
-                    if self.logger:
-                        self.logger.error(f"Falha ao clonar repositório: {str(e)}")
-                    raise ValueError(f"Falha ao clonar repositório: {str(e)}")
+                if self.logger:
+                    self.logger.error(f"Falha ao clonar repositório: {str(e)}")
+                raise ValueError(f"Falha ao clonar repositório: {str(e)}")
     
     def _process_documentation_files(self, repo_dir):
         """
@@ -264,6 +225,7 @@ class DownloadAgent:
             """Verifica se um arquivo é um arquivo de documentação baseado na extensão."""
             doc_extensions = [
                 '.md', '.markdown',  # Markdown
+                '.mdx',              # MDX (Markdown com JSX)
                 '.rst',              # reStructuredText
                 '.txt',              # Texto simples
                 '.adoc', '.asciidoc', # AsciiDoc
@@ -278,57 +240,81 @@ class DownloadAgent:
             
             return any(filename.lower().endswith(ext) for ext in doc_extensions)
         
+        # Abordagem mais dinâmica para encontrar diretórios de documentação
+        def is_likely_doc_dir(dir_path, relative_path):
+            """Determina se um diretório provavelmente contém documentação."""
+            dir_name = os.path.basename(dir_path).lower()
+        
         # Diretórios comuns de documentação
-        doc_dirs = [
-            'docs', 'documentation', 'doc',
-            'wiki', 'help',
-            'examples', 'tutorials',
-            'manual', 'guide', 'guides',
-            'reference'
+            doc_dir_names = [
+                'docs', 'documentation', 'doc', 'wiki', 'help',
+                'examples', 'tutorials', 'manual', 'guide', 'guides',
+                'reference', 'api-reference', 'learn', 'api'
         ]
+            
+            # Se o nome do diretório corresponde a um nome típico
+            if dir_name in doc_dir_names or any(doc_name in dir_name for doc_name in doc_dir_names):
+                return True
+                
+            # Se o caminho relativo indica um diretório de documentação
+            if any(doc_name in relative_path.lower() for doc_name in doc_dir_names):
+                return True
+                
+            # Verificar se contém arquivos de documentação
+            doc_files_count = 0
+            total_files = 0
+            
+            for item in os.listdir(dir_path):
+                item_path = os.path.join(dir_path, item)
+                if os.path.isfile(item_path):
+                    total_files += 1
+                    if is_doc_file(item):
+                        doc_files_count += 1
+            
+            # Se tem pelo menos alguns arquivos e uma proporção significativa é doc
+            if total_files > 0 and doc_files_count > 0:
+                doc_ratio = doc_files_count / total_files
+                if doc_ratio > 0.5 or doc_files_count >= 3:  # Mais de 50% ou pelo menos 3 doc files
+                    return True
+                    
+            return False
         
         found_files = []
         found_files_metadata = {}
         
-        # 1. Buscar em diretórios específicos
-        for doc_dir in doc_dirs:
-            dir_path = os.path.join(repo_dir, doc_dir)
-            if os.path.exists(dir_path) and os.path.isdir(dir_path):
-                for root, _, files in os.walk(dir_path):
-                    for file in files:
-                        if is_doc_file(file):
-                            file_path = os.path.join(root, file)
-                            found_files.append(file_path)
-                            
-                            # Coletar metadados
-                            self._collect_file_metadata(file_path, repo_dir, found_files_metadata)
+        # Realizar uma busca inteligente em todo o repositório
+        if self.logger:
+            self.logger.info("Buscando arquivos de documentação no repositório...")
+        else:
+            console.print("[blue]Buscando arquivos de documentação no repositório...[/blue]")
         
-        # 2. Buscar na raiz (especialmente README.md e outros arquivos comuns)
+        # 1. Primeiro verificar a raiz (especialmente README.md e outros arquivos comuns)
         for file in os.listdir(repo_dir):
             file_path = os.path.join(repo_dir, file)
             if os.path.isfile(file_path) and is_doc_file(file):
                 found_files.append(file_path)
-                
                 # Coletar metadados
                 self._collect_file_metadata(file_path, repo_dir, found_files_metadata)
         
-        # Se não encontrarmos nada nos diretórios específicos, buscar em todo o repositório
-        if not found_files:
-            if self.logger:
-                self.logger.warning("Nenhum arquivo de documentação encontrado em diretórios convencionais. Buscando em todo o repositório...")
-            else:
-                console.print("[yellow]Nenhum arquivo de documentação encontrado em diretórios convencionais. Buscando em todo o repositório...[/yellow]")
+        # 2. Buscar em todo o repositório usando heurísticas
+        for root, dirs, files in os.walk(repo_dir):
+            # Ignorar diretórios ocultos (ex: .git, node_modules, etc.)
+            if '/.' in root or '\\.' in root or '/node_modules' in root or '\\node_modules' in root:
+                continue
+                
+            # Calcular caminho relativo para o diretório atual
+            rel_path = os.path.relpath(root, repo_dir)
             
-            for root, _, files in os.walk(repo_dir):
-                # Ignorar diretórios ocultos (ex: .git)
-                if '/.' in root or '\\.' in root:
-                    continue
-                    
+            # Verificar se o diretório atual provavelmente contém documentação
+            if rel_path != "." and not is_likely_doc_dir(root, rel_path):
+                continue  # Pular diretórios que não parecem ser de documentação
+                
+            # Procurar arquivos de documentação neste diretório
                 for file in files:
                     if is_doc_file(file):
                         file_path = os.path.join(root, file)
+                    if file_path not in found_files:  # Evitar duplicatas
                         found_files.append(file_path)
-                        
                         # Coletar metadados
                         self._collect_file_metadata(file_path, repo_dir, found_files_metadata)
         
@@ -532,10 +518,19 @@ class DownloadAgent:
             # Processar arquivos de documentação
             doc_files = self._process_documentation_files(repo_dir)
             
+            # Verificar se encontramos arquivos
+            if not doc_files:
+                if self.logger:
+                    self.logger.warning("Nenhum arquivo de documentação encontrado!")
+                else:
+                    console.print("[yellow]Nenhum arquivo de documentação encontrado![/yellow]")
+            
             # Atualizar contexto
             self.context["repo_info"] = repo_info
             self.context["documentation_files"] = [os.path.relpath(f, repo_dir) for f in doc_files]
             self.context["repository_directory"] = repo_dir
+            self.context["originals_directory"] = os.path.dirname(repo_dir)
+            self.context["temp_directory"] = repo_dir
             
             # Registro de hora de início/fim para cronometragem
             self.context["download_stats"] = {
@@ -569,3 +564,24 @@ class DownloadAgent:
                 
             # Re-lançar exceção para ser tratada no nível superior
             raise
+    
+    def cleanup(self):
+        """
+        Limpa os arquivos temporários após o processamento.
+        """
+        if os.path.exists(self.temp_dir):
+            try:
+                if self.logger:
+                    self.logger.info(f"Limpando diretório temporário: {self.temp_dir}")
+                else:
+                    console.print(f"[blue]Limpando diretório temporário: {self.temp_dir}[/blue]")
+                
+                shutil.rmtree(self.temp_dir)
+                return True
+            except Exception as e:
+                if self.logger:
+                    self.logger.warning(f"Não foi possível limpar o diretório temporário: {str(e)}")
+                else:
+                    console.print(f"[yellow]Não foi possível limpar o diretório temporário: {str(e)}[/yellow]")
+                return False
+        return True

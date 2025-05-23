@@ -146,6 +146,9 @@ Este arquivo contém um registro de tarefas a serem implementadas e bugs a serem
 4. [x] Validação de integridade de arquivos
 5. [ ] Adicionar testes de penetração para validar segurança
 
+### Implementar supervisor de histórico de clonagens
+- [ ] Implementar supervisor de histórico de clonagens: registrar em memória/arquivo quantas vezes cada repositório foi clonado e em quais datas, para uso futuro por uma IA administradora.
+
 ---
 
 Este arquivo será atualizado regularmente conforme o projeto evolui e novas ideias surgem.

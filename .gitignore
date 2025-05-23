@@ -26,12 +26,22 @@ var/
 *.egg
 
 # Diretórios de dados e temporários
-data/temp/
+# Apenas .gitkeep deve ser versionado, o resto é lixo/resultado
+
 data/originals/*
-data/processed/*
 !data/originals/.gitkeep
+
+data/processed/*
 !data/processed/.gitkeep
+
+data/temp/*
 !data/temp/.gitkeep
+
+# Relatórios, históricos e outputs
+*.md
+*.json
+*.csv
+*.log
 
 # Logs
 logs/*

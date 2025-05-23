@@ -127,3 +127,14 @@ Próximos passos: Iniciar desenvolvimento do Agente de Parsing, que será respon
 Responsável: Assistente IA @cursor
 
 **Este documento deve ser atualizado regularmente com novas decisões e contextos!**
+
+## Organização dos Dados e Limpeza (2024)
+
+- Cada repositório é clonado em `data/originals/<nome-repositorio>/`, com nome humano e único.
+- Antes de clonar, o clone anterior é removido (garantindo sempre a versão mais recente e sem lixo acumulado).
+- O processamento é feito em uma cópia isolada em `data/temp/<nome-repositorio>/`.
+- Apenas arquivos `.gitkeep` são versionados nestas pastas.
+- O usuário pode inspecionar manualmente os clones em `data/originals/`.
+- O `.gitignore` impede o versionamento de qualquer dado, output ou relatório.
+- O fluxo foi pensado para facilitar auditoria manual, reprodutibilidade e evitar lixo acumulado.
+- Futuramente, um supervisor de histórico de clonagens poderá ser implementado (ver TODO.md).
