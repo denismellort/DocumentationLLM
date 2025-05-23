@@ -88,6 +88,43 @@ pip install .
 
 ---
 
+### Passo 6: Configuração do arquivo .env (após instalar tudo)
+
+Após instalar as dependências e preparar o ambiente, configure o arquivo `.env` com suas chaves de API:
+
+Copie o arquivo de exemplo:
+
+#### Windows (CMD)
+```cmd
+copy .env.example .env
+```
+#### Windows (PowerShell)
+```powershell
+Copy-Item .env.example .env
+```
+#### Linux/MacOS
+```bash
+cp .env.example .env
+```
+
+Edite o arquivo `.env` e preencha com suas chaves de API (Somente OpenAI necessária inicialmente):
+
+```
+OPENAI_API_KEY=sua-chave-aqui
+LANGSMITH_API_KEY=sua-chave-aqui
+TAVILY_API_KEY=sua-chave-aqui
+GOOGLE_API_KEY=sua-chave-aqui
+FIRECRAWL_API_KEY=sua-chave-aqui
+```
+
+Caso não exista um arquivo `.env.example`, crie o arquivo `.env` diretamente com pelo menos a sua chave da OpenAI:
+
+```
+OPENAI_API_KEY=sua-chave-aqui
+```
+
+---
+
 ## Uso
 
 Após a instalação como pacote, você poderá:
