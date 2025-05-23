@@ -40,6 +40,7 @@ data/temp/*
 # Relatórios, históricos e outputs
 *.md
 *.json
+!.cursor/*.json
 *.csv
 *.log
 

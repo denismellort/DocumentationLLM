@@ -1,4 +1,5 @@
 {
+  "environment": {
     "user": "ubuntu",
     "install": "./.cursor/install.sh",
     "start": "",
@@ -13,3 +14,4 @@
       "OPENAI_API_KEY": "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"
     }
   }
+} 
