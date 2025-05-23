@@ -171,3 +171,14 @@ rm -rf data/originals/* data/temp/* data/processed/*
 # Rode o pipeline normalmente
 python src/main.py --repo https://github.com/openai/openai-python
 ``` 
+
+## Boas Práticas de Releases, Versionamento e Publicação
+
+- Use versionamento semântico (MAJOR.MINOR.PATCH) para cada release.
+- Crie uma release no GitHub para cada marco importante.
+- Atualize o CHANGELOG.md e o número de versão antes de cada release.
+- Publique packages no GitHub Packages ou PyPI se aplicável.
+- Use GitHub Actions para automatizar releases e publicação de packages.
+- Sempre documente mudanças relevantes no CONTEXT.md, README.md e CHANGELOG.md.
+- Sempre que o usuário pedir para documentar, atualize os arquivos de contexto do projeto.
+- O objetivo é garantir continuidade e clareza para qualquer colaborador (humano ou IA). 

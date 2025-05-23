@@ -1,5 +1,7 @@
 # Changelog
 
+# IMPORTANTE: Sempre mantenha este changelog atualizado a cada release. A GPT ou humano responsável deve sugerir e atualizar o changelog ao implementar mudanças relevantes, seguindo o padrão de versionamento semântico e releases do projeto.
+
 ## [Unreleased] - Próximas Atualizações
 
 - Sistema de análise semântica de documentos

@@ -112,6 +112,17 @@ Ao criar ou modificar templates de prompts em `src/prompts/`:
 
 Se você tiver dúvidas ou precisar de ajuda, abra um issue ou entre em contato com a equipe pelo e-mail [email].
 
+## Padrão de Releases, Versionamento e Publicação
+
+- Sempre use versionamento semântico (MAJOR.MINOR.PATCH).
+- Crie uma release para cada marco importante ou mudança relevante.
+- Atualize o CHANGELOG.md e o número de versão no código antes de criar uma release.
+- Publique packages no GitHub Packages ou PyPI se o projeto for uma biblioteca ou CLI.
+- Use GitHub Actions para automatizar releases e publicação de packages sempre que possível.
+- Documente cada release e mudança relevante no CONTEXT.md e README.md.
+- Sempre que o usuário pedir para documentar, atualize os arquivos de contexto do projeto.
+- O objetivo é garantir que qualquer GPT (ou humano) possa continuar o projeto exatamente de onde parou, com histórico e instruções claras.
+
 ---
 
 Agradecemos suas contribuições para tornar o DocumentationLLM uma ferramenta melhor para todos!

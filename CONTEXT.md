@@ -138,3 +138,45 @@ Responsável: Assistente IA @cursor
 - O `.gitignore` impede o versionamento de qualquer dado, output ou relatório.
 - O fluxo foi pensado para facilitar auditoria manual, reprodutibilidade e evitar lixo acumulado.
 - Futuramente, um supervisor de histórico de clonagens poderá ser implementado (ver TODO.md).
+
+## Padrão de Releases, Versionamento e Publicação (2024)
+
+### 1. Releases no GitHub
+- Releases marcam versões estáveis do projeto, associadas a um commit/tag específico.
+- Devem ser criadas via interface web ou linha de comando (tag + release).
+- Sempre crie uma release para cada marco importante.
+- Use versionamento semântico (ex: v1.2.3).
+- Escreva changelog detalhado na descrição da release.
+
+### 2. Packages no GitHub
+- Se o projeto for uma biblioteca ou CLI, publique como package no GitHub Packages ou PyPI.
+- Siga as instruções de empacotamento e publicação para Python (setup.py, twine, etc).
+
+### 3. Versionamento Semântico (SemVer)
+- Use o padrão MAJOR.MINOR.PATCH (ex: 1.2.3).
+- MAJOR: Mudanças incompatíveis; MINOR: Novas funcionalidades compatíveis; PATCH: Correções de bugs.
+- Atualize o número de versão e mantenha o CHANGELOG.md.
+
+### 4. Boas Práticas de Releases e Versionamento
+- Crie uma release para cada marco importante.
+- Mantenha CHANGELOG.md atualizado.
+- Documente no CONTEXT.md/README.md quando criar release, como numerar versões, como publicar package.
+- Automatize releases com GitHub Actions se possível.
+- Inclua instruções para contribuidores.
+
+### 5. Sugestão de Documentação para o Projeto
+- Adicione instruções claras no CONTEXT.md e CONTRIBUTING.md sobre releases, versionamento e publicação.
+- Explique quando criar release, como numerar, como publicar, e como automatizar.
+
+### 6. Sugestão de Automação (GitHub Actions)
+- Use workflows para criar releases e publicar packages automaticamente ao criar uma nova tag.
+- Documente exemplos de workflows no repositório.
+
+### 7. Quando a GPT deve sugerir release ou patch
+- Sempre que houver nova funcionalidade, breaking change, bug crítico ou mudança estrutural.
+- A GPT deve atualizar CHANGELOG.md, sugerir novo número de versão, sugerir criação de release/tag e publicação de package se aplicável.
+
+### Conceito de Documentação e Contextualização para GPTs Futuras
+- Sempre que o usuário pedir para documentar, o agente deve atualizar CONTEXT.md, CONTRIBUTING.md, README.md ou outros arquivos de contexto.
+- O projeto deve manter memória, histórico e instruções para que qualquer GPT (ou humano) possa continuar o desenvolvimento exatamente de onde parou.
+- Se ainda não aplicado, este conceito deve ser implementado futuramente.
