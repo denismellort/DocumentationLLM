@@ -151,4 +151,13 @@ Este arquivo contém um registro de tarefas a serem implementadas e bugs a serem
 
 ---
 
+## [Automação e Execução por Agentes]
+
+- Manter sempre atualizada a sequência de comandos funcionais para setup e uso do projeto.
+- Documentar execuções automatizadas, erros e aprendizados nos arquivos de contexto (CONTEXT.md, CHANGELOG.md, etc.).
+- Garantir que o README.md oriente agentes a lerem os arquivos de contexto após o clone.
+- Registrar qualquer erro de importação, instalação ou execução para facilitar troubleshooting por agentes futuros.
+
+---
+
 Este arquivo será atualizado regularmente conforme o projeto evolui e novas ideias surgem.

@@ -180,3 +180,37 @@ Responsável: Assistente IA @cursor
 - Sempre que o usuário pedir para documentar, o agente deve atualizar CONTEXT.md, CONTRIBUTING.md, README.md ou outros arquivos de contexto.
 - O projeto deve manter memória, histórico e instruções para que qualquer GPT (ou humano) possa continuar o desenvolvimento exatamente de onde parou.
 - Se ainda não aplicado, este conceito deve ser implementado futuramente.
+
+## [Registro de Execução Automatizada - Data/Hora: 2024-05-23 14:00 UTC-3]
+
+- Setup executado automaticamente por agente (exemplo: GPT-4, background agent, etc.)
+- Fluxo seguido:
+  1. Limpeza total da pasta de trabalho
+  2. Clone do repositório
+  3. Criação e ativação do ambiente virtual
+  4. Instalação das dependências
+  5. Instalação do pacote local
+  6. Cópia do .env.example para .env
+  7. Definição da variável de ambiente OPENAI_API_KEY
+  8. Teste do comando `docllm --help`
+- Resultado: O comando `docllm --help` está disponível, mas apresentou erro de importação ("attempted relative import beyond top-level package").
+- Não houve intervenção manual, todo o processo foi automatizado.
+
+### Comandos funcionais executados (PowerShell):
+
+```powershell
+Remove-Item * -Recurse -Force
+git clone https://github.com/denismellort/DocumentationLLM.git .
+python -m venv venv
+.\venv\Scripts\activate
+pip install -r requirements.txt
+pip install .
+Copy-Item .env.example .env
+$env:OPENAI_API_KEY='SUA-CHAVE-AQUI'
+docllm --help
+```
+
+### Observações para agentes futuros
+- Sempre leia os arquivos de contexto após o clone.
+- Documente qualquer erro ou comportamento inesperado aqui.
+- Siga a ordem do README.md para garantir reprodutibilidade.

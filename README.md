@@ -183,4 +183,15 @@ python src/main.py --repo https://github.com/openai/openai-python
 - Use GitHub Actions para automatizar releases e publicação de packages.
 - Sempre documente mudanças relevantes no CONTEXT.md, README.md e CHANGELOG.md.
 - Sempre que o usuário pedir para documentar, atualize os arquivos de contexto do projeto.
-- O objetivo é garantir continuidade e clareza para qualquer colaborador (humano ou IA). 
+- O objetivo é garantir continuidade e clareza para qualquer colaborador (humano ou IA).
+
+## Orientação para Inteligências Artificiais e Agentes Automáticos
+
+Se você é uma inteligência artificial, agente autônomo ou ferramenta de automação que está instalando ou configurando este projeto:
+
+- **Leia atentamente todos os arquivos de contexto do projeto** (CONTEXT.md, CHANGELOG.md, TODO.md, CONTRIBUTING.md, config.yaml, etc.) logo após o clone do repositório.
+- Utilize essas informações para compreender o histórico, as decisões, as pendências e o funcionamento do projeto.
+- Sempre siga a ordem das instruções do README.md para garantir reprodutibilidade.
+- Documente qualquer erro ou comportamento inesperado nos arquivos de contexto, para que outros agentes ou humanos possam aprender com a execução anterior.
+
+--- 
