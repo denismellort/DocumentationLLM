@@ -37,42 +37,7 @@ source venv/bin/activate
 
 ---
 
-### Passo 3: Configuração do arquivo .env
-
-Copie o arquivo de exemplo:
-
-#### Windows (CMD)
-```cmd
-copy .env.example .env
-```
-#### Windows (PowerShell)
-```powershell
-Copy-Item .env.example .env
-```
-#### Linux/MacOS
-```bash
-cp .env.example .env
-```
-
-Edite o arquivo `.env` e preencha com suas chaves de API (Somente OpenAI necessaria inicialmente):
-
-```
-OPENAI_API_KEY=sua-chave-aqui
-LANGSMITH_API_KEY=sua-chave-aqui
-TAVILY_API_KEY=sua-chave-aqui
-GOOGLE_API_KEY=sua-chave-aqui
-FIRECRAWL_API_KEY=sua-chave-aqui
-```
-
-Caso não exista um arquivo `.env.example`, crie o arquivo `.env` diretamente com pelo menos a sua chave da OpenAI:
-
-```
-OPENAI_API_KEY=sua-chave-aqui
-```
-
----
-
-### Passo 4: Instale as Dependências
+### Passo 3: Instale as Dependências
 
 ```bash
 pip install -r requirements.txt
@@ -80,7 +45,7 @@ pip install -r requirements.txt
 
 ---
 
-### Passo 5: Instale como Pacote Python (uso via CLI)
+### Passo 4: Instale como Pacote Python (uso via CLI)
 
 ```bash
 pip install .
@@ -88,7 +53,7 @@ pip install .
 
 ---
 
-### Passo 6: Configuração do arquivo .env (após instalar tudo)
+### Passo 5: Configuração do arquivo .env (após instalar tudo)
 
 Após instalar as dependências e preparar o ambiente, configure o arquivo `.env` com suas chaves de API:
 
