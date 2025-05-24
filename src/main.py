@@ -27,17 +27,9 @@ from documentationllm.utils.env_utils import load_config
 from documentationllm.utils.logger import DocumentationLogger
 from documentationllm.utils.version_control import VersionControl
 
-# Adicionar o diretório raiz ao path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# ... restante do código igual ao src/main.py ... 
-
-# -----------------------------------------------
-# Função principal exposta para o CLI
-# -----------------------------------------------
-
-def main() -> int:
-    """Ponto de entrada principal para o DocumentationLLM."""
+# Função principal do programa
+def main():
     # Carregar variáveis de ambiente
     load_dotenv()
     
@@ -94,12 +86,10 @@ def main() -> int:
         config = load_config(args.config)
         
         # Inicializar logger
-        logger = DocumentationLogger(config)
-        if args.verbose:
-            logger.set_verbose(True)
+        logger = DocumentationLogger(verbose=args.verbose)
         
         # Criar controle de versão
-        version_control = VersionControl(config, logger)
+        version_control = VersionControl(logger=logger)
         
         # Mostrar banner inicial
         console.print(Panel(
@@ -115,7 +105,7 @@ def main() -> int:
         # Por enquanto, apenas executa o agente de download
         # TODO: Implementar pipeline completo
         download_agent = DownloadAgent(config, logger, version_control)
-        result = download_agent.execute(source=args.source)
+        result = download_agent.execute(args.source)
         
         if result:
             console.print("[bold green]✓[/bold green] Pipeline executado com sucesso!")
@@ -130,6 +120,5 @@ def main() -> int:
     return 0
 
 
-# Executa quando rodado diretamente: `python -m documentationllm.main`
-if __name__ == "__main__":  # pragma: no cover
-    sys.exit(main()) 
+if __name__ == "__main__":
+    sys.exit(main())

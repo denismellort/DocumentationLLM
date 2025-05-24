@@ -4,6 +4,23 @@ Sistema para ingestão e análise de documentações com suporte a LLMs.
 
 ---
 
+## Pré-requisitos
+
+### Todos os Sistemas
+- Python 3.8 ou superior
+- pip (gerenciador de pacotes Python)
+- Git
+
+### Linux/Ubuntu
+Em sistemas Debian/Ubuntu, você precisará instalar o pacote `python3-venv` antes de criar ambientes virtuais:
+
+```bash
+sudo apt update
+sudo apt install python3-venv
+```
+
+---
+
 ## Instalação Completa
 
 ### Passo 1: Clone o Repositório
@@ -34,6 +51,8 @@ python -m venv venv
 python3 -m venv venv
 source venv/bin/activate
 ```
+
+**Nota para Linux:** Se você receber um erro sobre `ensurepip`, certifique-se de ter instalado o `python3-venv` conforme descrito nos pré-requisitos.
 
 ---
 
