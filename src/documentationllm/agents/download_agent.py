@@ -301,24 +301,18 @@ class DownloadAgent:
                 found_files.append(file_path)
                 # Coletar metadados
                 self._collect_file_metadata(file_path, repo_dir, found_files_metadata)
-        
-        # 2. Buscar em todo o repositório usando heurísticas
+        # 2. Buscar em todo o repositório usando heurísticas (recursivo)
         for root, dirs, files in os.walk(repo_dir):
             # Ignorar diretórios ocultos (ex: .git, node_modules, etc.)
             if '/.' in root or '\\.' in root or '/node_modules' in root or '\\node_modules' in root:
                 continue
-                
             # Calcular caminho relativo para o diretório atual
             rel_path = os.path.relpath(root, repo_dir)
-            
             # Verificar se o diretório atual provavelmente contém documentação
-            if rel_path != "." and not is_likely_doc_dir(root, rel_path):
-                continue  # Pular diretórios que não parecem ser de documentação
-                
-            # Procurar arquivos de documentação neste diretório
-                for file in files:
-                    if is_doc_file(file):
-                        file_path = os.path.join(root, file)
+            # (removido filtro para garantir busca recursiva em todos os subdirs)
+            for file in files:
+                if is_doc_file(file):
+                    file_path = os.path.join(root, file)
                     if file_path not in found_files:  # Evitar duplicatas
                         found_files.append(file_path)
                         # Coletar metadados
