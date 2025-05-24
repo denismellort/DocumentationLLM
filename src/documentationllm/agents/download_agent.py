@@ -527,7 +527,7 @@ class DownloadAgent:
             
             # Atualizar contexto
             self.context["repo_info"] = repo_info
-            self.context["documentation_files"] = [os.path.relpath(f, repo_dir) for f in doc_files]
+            self.context["documentation_files"] = [os.path.join(repo_dir, os.path.relpath(f, repo_dir)) for f in doc_files]
             self.context["repository_directory"] = repo_dir
             self.context["originals_directory"] = os.path.dirname(repo_dir)
             self.context["temp_directory"] = repo_dir
