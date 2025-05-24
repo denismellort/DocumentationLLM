@@ -117,16 +117,21 @@ class DownloadAgent:
         # Identificar tipo de repositório e extrair informações específicas
         if "github.com" in parsed_url.netloc:
             repo_info["type"] = "github"
-            
             # Extrair owner/name do caminho
             path_parts = repo_info["path"].split("/")
             if len(path_parts) >= 2:
                 repo_info["owner"] = path_parts[0]
                 repo_info["name"] = path_parts[1]
-                
-                # Verificar se há uma branch específica
+                # Verificar se há uma branch e subdiretório específico
                 if len(path_parts) >= 4 and path_parts[2] == "tree":
                     repo_info["branch"] = path_parts[3]
+                    if len(path_parts) > 4:
+                        # Subdiretório pode conter barras
+                        repo_info["subdir"] = "/".join(path_parts[4:])
+                    else:
+                        repo_info["subdir"] = None
+                else:
+                    repo_info["subdir"] = None
         
         elif "gitlab.com" in parsed_url.netloc:
             repo_info["type"] = "gitlab"
@@ -514,6 +519,11 @@ class DownloadAgent:
             
             # Clonar repositório
             repo_dir = self._clone_repository(repo_info)
+            
+            # Se subdiretório foi especificado, ajustar repo_dir
+            subdir = repo_info.get("subdir")
+            if subdir:
+                repo_dir = os.path.join(repo_dir, subdir)
             
             # Processar arquivos de documentação
             doc_files = self._process_documentation_files(repo_dir)
