@@ -51,7 +51,10 @@ Para cada seção, gere um JSON:
             console.print("[red]openai não instalado. Instale com 'pip install openai'.[/red]")
             return self.context
         results = {}
+        doc_count = len(self.documents)
+        console.print(f"[cyan][DEBUG] SemanticLinkingAgent: processando {doc_count} documentos.[/cyan]")
         for file_path, doc in self.documents.items():
+            console.print(f"[cyan][DEBUG] Documento: {file_path} | Título: {getattr(doc, 'title', 'N/A')}[/cyan]")
             prompt = self._build_prompt(doc)
             if self.logger:
                 self.logger.info(f"Prompt OpenAI para {file_path}:\n{prompt}")
