@@ -47,3 +47,25 @@ except ImportError:
     from ..utils.version_control import VersionControl
 
 # ... restante do código igual ao src/main.py ... 
+
+# -----------------------------------------------
+# Função principal exposta para o CLI
+# -----------------------------------------------
+
+def main() -> int:  # noqa: D401
+    """Ponto de entrada principal para o DocumentationLLM.
+
+    Esta função é importada pelo wrapper em `documentationllm.cli`.
+    Por enquanto, ela apenas imprime uma mensagem informativa e encerra
+    com código de status 0. A lógica completa do pipeline deve ser
+    implementada aqui em versões futuras.
+    """
+    console = Console()
+    console.print(Panel("[bold green]DocumentationLLM inicializado com sucesso![/bold green]"))
+    # TODO: adicionar o fluxo de execução real do pipeline
+    return 0
+
+
+# Executa quando rodado diretamente: `python -m documentationllm.main`
+if __name__ == "__main__":  # pragma: no cover
+    sys.exit(main()) 
