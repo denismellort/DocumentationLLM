@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="documentationllm",
-    version="0.1.2",
+    version="0.1.3",
     author="Your Name",
     author_email="your.email@example.com",
     description="Processador Inteligente de Documentação para LLMs com Supervisão de IA",
