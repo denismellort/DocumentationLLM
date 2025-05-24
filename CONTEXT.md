@@ -323,3 +323,63 @@ Todas as dependências agora usam versões específicas (==) ao invés de (>=) p
    - [ ] Setup MkDocs
    - [ ] Documentação de arquitetura
    - [ ] ADRs iniciais
+
+[2025-05-24T02:13:41.902826] Iniciando download do repositório: https://github.com/microsoft/playwright/tree/main/docs/
+
+[2025-05-24T02:13:41.903645] Repositório identificado: github - microsoft/playwright
+
+[2025-05-24T02:13:49.151831] Repositório clonado em: data/temp/playwright
+
+[2025-05-24T02:13:49.151883] Buscando arquivos de documentação em subdiretório: data/temp/playwright/docs
+
+[2025-05-24T02:13:49.155578] Arquivos de documentação encontrados: 0
+
+[2025-05-24T02:14:55.178971] Iniciando download do repositório: https://github.com/microsoft/playwright/tree/main/docs/
+
+[2025-05-24T02:14:55.179767] Repositório identificado: github - microsoft/playwright
+
+[2025-05-24T02:15:01.839255] Repositório clonado em: data/temp/playwright
+
+[2025-05-24T02:15:01.839309] Buscando arquivos de documentação em subdiretório: data/temp/playwright/docs
+
+[2025-05-24T02:15:01.965574] Arquivos de documentação encontrados: 172
+
+[2025-05-24T02:16:21.247277] Iniciando download do repositório: https://github.com/openai/openai-python
+
+[2025-05-24T02:16:21.248037] Repositório identificado: github - openai/openai-python
+
+[2025-05-24T02:16:22.287252] Repositório clonado em: data/temp/openai-python
+
+[2025-05-24T02:16:22.301136] Arquivos de documentação encontrados: 10
+
+[2025-05-24T02:20:35.997542] Iniciando download do repositório: https://github.com/openai/openai-python
+
+[2025-05-24T02:20:35.998297] Repositório identificado: github - openai/openai-python
+
+[2025-05-24T02:20:37.000270] Repositório clonado em: data/temp/openai-python
+
+[2025-05-24T02:20:37.014506] Arquivos de documentação encontrados: 10
+
+[2025-05-24T02:22:12.440051] Iniciando download do repositório: https://github.com/openai/openai-python
+
+[2025-05-24T02:22:12.440799] Repositório identificado: github - openai/openai-python
+
+[2025-05-24T02:22:13.527072] Repositório clonado em: data/temp/openai-python
+
+[2025-05-24T02:22:13.540876] Arquivos de documentação encontrados: 10
+
+[2025-05-24T02:37:41.940076] Iniciando download do repositório: https://github.com/openai/openai-python
+
+[2025-05-24T02:37:41.940789] Repositório identificado: github - openai/openai-python
+
+[2025-05-24T02:37:42.967319] Repositório clonado em: data/temp/openai-python
+
+[2025-05-24T02:37:42.981466] Arquivos de documentação encontrados: 10
+
+[2025-05-24T02:39:36.418817] Iniciando download do repositório: https://github.com/openai/openai-python
+
+[2025-05-24T02:39:36.419602] Repositório identificado: github - openai/openai-python
+
+[2025-05-24T02:39:37.428627] Repositório clonado em: data/temp/openai-python
+
+[2025-05-24T02:39:37.445606] Arquivos de documentação encontrados: 10

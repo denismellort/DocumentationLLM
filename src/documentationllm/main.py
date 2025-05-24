@@ -22,6 +22,7 @@ from documentationllm.agents.download_agent import DownloadAgent
 from documentationllm.agents.parsing_agent import ParsingAgent
 from documentationllm.agents.supervisor_agent import SupervisorAgent
 from documentationllm.agents.token_analyst_agent import TokenAnalystAgent
+from documentationllm.agents.semantic_linking_agent import SemanticLinkingAgent
 
 # Importar utilitários
 from documentationllm.utils.env_utils import load_config
@@ -41,6 +42,7 @@ def main() -> int:
     """Ponto de entrada principal para o DocumentationLLM."""
     # Carregar variáveis de ambiente
     load_dotenv()
+    print("[DEBUG] OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY"))
     
     # Configurar parser de argumentos
     parser = argparse.ArgumentParser(
@@ -94,13 +96,20 @@ def main() -> int:
         # Carregar configurações
         config = load_config(args.config)
         
-        # Inicializar logger
-        logger = DocumentationLogger(config)
-        if args.verbose:
-            logger.set_verbose(True)
+        # Garantir que log_level é string
+        log_level = config["processing"].get("log_level", "info")
+        if isinstance(log_level, dict):
+            # Corrigir caso venha como dict por erro de merge/config
+            log_level = log_level.get("value", "info")
+        if not isinstance(log_level, str):
+            log_level = str(log_level)
+        print(f"[DEBUG] log_level usado para o logger: {log_level}")
+        logger = DocumentationLogger(log_level=log_level)
+        # if args.verbose:
+        #     logger.set_verbose(True)
         
         # Criar controle de versão
-        version_control = VersionControl(config, logger)
+        version_control = VersionControl()
         
         # Mostrar banner inicial
         console.print(Panel(
@@ -117,12 +126,27 @@ def main() -> int:
             "version_control": version_control,
             "execution_id": datetime.now().strftime("%Y%m%d_%H%M%S"),
             "repo_url": args.source,
-            "directories": config["directories"]
+            "directories": config["directories"],
+            "stats": {
+                "tokens_used": 0,
+                "estimated_cost": 0.0,
+                "steps_completed": [],
+                "steps_failed": [],
+                "start_time": datetime.now(),
+                "end_time": None,
+            },
+            "token_stats": {
+                "models": {},
+                "steps": {},
+                "total_tokens": 0,
+                "total_cost": 0.0
+            }
         }
         
         # Inicializar agentes
         download_agent = DownloadAgent(context)
         parsing_agent = ParsingAgent(context)
+        semantic_linking_agent = SemanticLinkingAgent(context)
         supervisor_agent = SupervisorAgent(context)
         token_analyst = TokenAnalystAgent(context)
         
@@ -140,6 +164,11 @@ def main() -> int:
         context = parsing_agent.run()
         if not context.get("parsing_completed"):
             raise Exception("Falha na etapa de parsing")
+        print(f"[cyan][DEBUG] Quantidade de documentos em context['parsed_documents']: {len(context.get('parsed_documents', {}))}")
+
+        # 2.5 Vinculação semântica (IA)
+        logger.info("Etapa 2.5: Vinculação semântica (IA)")
+        context = semantic_linking_agent.run()
         
         # 3. Análise de tokens
         logger.info("Etapa 3: Análise de tokens")

@@ -117,16 +117,23 @@ class DownloadAgent:
         # Identificar tipo de repositório e extrair informações específicas
         if "github.com" in parsed_url.netloc:
             repo_info["type"] = "github"
-            
-            # Extrair owner/name do caminho
             path_parts = repo_info["path"].split("/")
             if len(path_parts) >= 2:
                 repo_info["owner"] = path_parts[0]
                 repo_info["name"] = path_parts[1]
-                
-                # Verificar se há uma branch específica
+                # Verificar se há uma branch e subdiretório específico
                 if len(path_parts) >= 4 and path_parts[2] == "tree":
                     repo_info["branch"] = path_parts[3]
+                    if len(path_parts) > 4:
+                        repo_info["subdir"] = "/".join(path_parts[4:])
+                    else:
+                        repo_info["subdir"] = None
+                    # Corrigir a URL para ser sempre a raiz do repositório
+                    repo_info["url"] = f"https://github.com/{repo_info['owner']}/{repo_info['name']}.git"
+                else:
+                    repo_info["subdir"] = None
+                    # Corrigir a URL para ser sempre a raiz do repositório
+                    repo_info["url"] = f"https://github.com/{repo_info['owner']}/{repo_info['name']}.git"
         
         elif "gitlab.com" in parsed_url.netloc:
             repo_info["type"] = "gitlab"
@@ -196,8 +203,7 @@ class DownloadAgent:
                 Repo.clone_from(
                     repo_info["url"],
                     originals_dir,
-                    branch=repo_info["branch"],
-                    depth=1
+                    branch=repo_info["branch"]
                 )
                 if self.logger:
                     self.logger.info(f"Repositório clonado com sucesso em: {originals_dir}")
@@ -295,24 +301,18 @@ class DownloadAgent:
                 found_files.append(file_path)
                 # Coletar metadados
                 self._collect_file_metadata(file_path, repo_dir, found_files_metadata)
-        
-        # 2. Buscar em todo o repositório usando heurísticas
+        # 2. Buscar em todo o repositório usando heurísticas (recursivo)
         for root, dirs, files in os.walk(repo_dir):
             # Ignorar diretórios ocultos (ex: .git, node_modules, etc.)
             if '/.' in root or '\\.' in root or '/node_modules' in root or '\\node_modules' in root:
                 continue
-                
             # Calcular caminho relativo para o diretório atual
             rel_path = os.path.relpath(root, repo_dir)
-            
             # Verificar se o diretório atual provavelmente contém documentação
-            if rel_path != "." and not is_likely_doc_dir(root, rel_path):
-                continue  # Pular diretórios que não parecem ser de documentação
-                
-            # Procurar arquivos de documentação neste diretório
-                for file in files:
-                    if is_doc_file(file):
-                        file_path = os.path.join(root, file)
+            # (removido filtro para garantir busca recursiva em todos os subdirs)
+            for file in files:
+                if is_doc_file(file):
+                    file_path = os.path.join(root, file)
                     if file_path not in found_files:  # Evitar duplicatas
                         found_files.append(file_path)
                         # Coletar metadados
@@ -491,6 +491,11 @@ class DownloadAgent:
             console.print(f"[green]Relatório de arquivos gerado em: {report_path}[/green]")
             console.print(f"[green]Metadados JSON salvos em: {json_report_path}[/green]")
     
+    def _log_context_step(self, message):
+        """Adiciona um registro incremental no CONTEXT.md com timestamp e descrição da ação."""
+        with open("CONTEXT.md", "a", encoding="utf-8") as f:
+            f.write(f"\n[{datetime.now().isoformat()}] {message}\n")
+    
     def run(self):
         """
         Método principal do agente.
@@ -499,6 +504,7 @@ class DownloadAgent:
             dict: Contexto atualizado com informações do download.
         """
         try:
+            self._log_context_step(f"Iniciando download do repositório: {self.repo_url}")
             if self.logger:
                 self.logger.info(f"Iniciando download do repositório: {self.repo_url}")
             else:
@@ -506,7 +512,7 @@ class DownloadAgent:
             
             # Validar URL e extrair informações
             repo_info = self._validate_url()
-            
+            self._log_context_step(f"Repositório identificado: {repo_info['type']} - {repo_info['owner']}/{repo_info['name']}")
             if self.logger:
                 self.logger.info(f"Repositório identificado: {repo_info['type']} - {repo_info['owner']}/{repo_info['name']}")
             else:
@@ -514,9 +520,19 @@ class DownloadAgent:
             
             # Clonar repositório
             repo_dir = self._clone_repository(repo_info)
-            
+            self._log_context_step(f"Repositório clonado em: {repo_dir}")
+            # Se subdiretório foi especificado, ajustar repo_dir para o subdiretório dentro do temp_dir
+            subdir = repo_info.get("subdir")
+            if subdir:
+                repo_dir = os.path.join(repo_dir, subdir)
+                print(f"[DEBUG] Buscando arquivos de documentação em subdiretório: {repo_dir}")
+                self._log_context_step(f"Buscando arquivos de documentação em subdiretório: {repo_dir}")
+                if not os.path.exists(repo_dir):
+                    self._log_context_step(f"Subdiretório '{subdir}' não encontrado em {repo_dir}")
+                    raise ValueError(f"Subdiretório '{subdir}' não encontrado em {repo_dir}")
             # Processar arquivos de documentação
             doc_files = self._process_documentation_files(repo_dir)
+            self._log_context_step(f"Arquivos de documentação encontrados: {len(doc_files)}")
             
             # Verificar se encontramos arquivos
             if not doc_files:
@@ -527,7 +543,7 @@ class DownloadAgent:
             
             # Atualizar contexto
             self.context["repo_info"] = repo_info
-            self.context["documentation_files"] = [os.path.relpath(f, repo_dir) for f in doc_files]
+            self.context["documentation_files"] = doc_files
             self.context["repository_directory"] = repo_dir
             self.context["originals_directory"] = os.path.dirname(repo_dir)
             self.context["temp_directory"] = repo_dir
@@ -551,7 +567,10 @@ class DownloadAgent:
             
             # Adicionar à lista de etapas concluídas
             self.context["stats"]["steps_completed"].append("download")
-            
+
+            # Marcar download como concluído
+            self.context["download_completed"] = True
+
             return self.context
             
         except Exception as e:
