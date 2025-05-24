@@ -115,8 +115,12 @@ Este arquivo contém um registro de tarefas a serem implementadas e bugs a serem
 - [x] Verificação de integridade de arquivos
 
 ### Testes
-- [ ] Testes unitários
+- [x] Testes unitários para SemanticLinkingAgent
+- [x] Mock da API OpenAI
+- [x] Testes de tratamento de erros
 - [ ] Testes de integração
+- [ ] Testes de performance
+- [ ] Testes de carga
 - [ ] CI/CD setup
 
 ## Bugs Conhecidos
