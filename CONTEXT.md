@@ -323,3 +323,114 @@ Todas as dependências agora usam versões específicas (==) ao invés de (>=) p
    - [ ] Setup MkDocs
    - [ ] Documentação de arquitetura
    - [ ] ADRs iniciais
+
+## [Registro de Implementação - SemanticLinkingAgent - Data/Hora: 2025-05-24 18:00:00 GMT-3]
+
+### Implementação do Agente de Vinculação Semântica
+
+O SemanticLinkingAgent foi implementado com as seguintes características:
+
+1. **Responsabilidades**:
+   - Processar documentos parseados do `context['parsed_documents']`
+   - Criar vínculos semânticos entre texto explicativo e blocos de código
+   - Gerar estrutura de dados LLM-friendly com os vínculos
+   - Preservar contexto e metadados originais
+
+2. **Estrutura do Código**:
+   - Classe principal: `SemanticLinkingAgent` em `src/documentationllm/agents/semantic_linking_agent.py`
+   - Métodos principais:
+     - `process_document`: Processa um documento completo
+     - `_extract_sections`: Separa texto e código em seções lógicas
+     - `_process_section`: Processa uma seção individual
+     - `_prepare_prompt`: Prepara o prompt para a OpenAI
+     - `_parse_openai_response`: Processa a resposta da API
+
+3. **Configurações**:
+   - Modelo: GPT-4 (configurável)
+   - Temperatura: 0.0 (para máxima precisão)
+   - Max tokens: 4000 por chamada
+   - Batch size: 5 seções por lote
+   - Retry attempts: 3 tentativas em caso de erro
+   - Confidence threshold: 0.8 para vínculos
+
+4. **Formato dos Vínculos Semânticos**:
+   ```json
+   {
+       "concepts": [
+           {
+               "name": "nome do conceito",
+               "text_references": ["trecho do texto"],
+               "code_references": ["trecho do código"],
+               "explanation": "explicação da relação",
+               "metadata": {
+                   "confidence": float,
+                   "type": "implementation|example|reference"
+               }
+           }
+       ]
+   }
+   ```
+
+5. **Melhorias Futuras**:
+   - Implementar cache de prompts/respostas similares
+   - Adicionar suporte a mais tipos de relações semânticas
+   - Melhorar a detecção de contexto entre documentos
+   - Otimizar uso de tokens com prompts mais eficientes
+   - Adicionar validação mais robusta das respostas da OpenAI
+
+6. **Integração com Pipeline**:
+   - O agente é chamado após o ParsingAgent
+   - Recebe documentos do `context['parsed_documents']`
+   - Salva resultados em `context['linked_documents']`
+   - Mantém rastreabilidade com paths originais
+
+7. **Supervisão e Logging**:
+   - Integração com SupervisorAgent para validação
+   - Logging detalhado de cada etapa do processamento
+   - Registro de uso de tokens via TokenAnalystAgent
+   - Geração de relatórios de qualidade dos vínculos
+
+8. **Tratamento de Erros**:
+   - Retry automático em falhas da API
+   - Fallback para seção original em caso de erro
+   - Logging estruturado de exceções
+   - Preservação de dados mesmo em falhas parciais
+
+### Decisões Técnicas
+
+1. **Uso do GPT-4**:
+   - Escolhido pela melhor compreensão semântica
+   - Temperatura 0.0 para maximizar precisão
+   - Custo justificado pela qualidade dos vínculos
+
+2. **Estrutura de Dados**:
+   - JSON aninhado para facilitar processamento
+   - Metadados detalhados para rastreabilidade
+   - Preservação do contexto original
+
+3. **Otimizações**:
+   - Processamento em lotes para eficiência
+   - Reutilização de contexto quando possível
+   - Validação de confiança dos vínculos
+
+4. **Integração**:
+   - Interface clara com outros agentes
+   - Formato padronizado de entrada/saída
+   - Logging consistente com o resto do sistema
+
+### Próximos Passos
+
+1. **Testes e Validação**:
+   - Implementar testes unitários
+   - Validar com diferentes tipos de documentação
+   - Medir qualidade dos vínculos semânticos
+
+2. **Otimizações**:
+   - Implementar sistema de cache
+   - Melhorar eficiência dos prompts
+   - Reduzir uso de tokens
+
+3. **Documentação**:
+   - Adicionar exemplos de uso
+   - Documentar todos os parâmetros
+   - Criar guia de troubleshooting

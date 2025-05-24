@@ -20,6 +20,7 @@ from rich.panel import Panel
 # Importar os agentes
 from documentationllm.agents.download_agent import DownloadAgent
 from documentationllm.agents.parsing_agent import ParsingAgent
+from documentationllm.agents.semantic_linking_agent import SemanticLinkingAgent
 from documentationllm.agents.supervisor_agent import SupervisorAgent
 from documentationllm.agents.token_analyst_agent import TokenAnalystAgent
 
@@ -123,6 +124,7 @@ def main() -> int:
         # Inicializar agentes
         download_agent = DownloadAgent(context)
         parsing_agent = ParsingAgent(context)
+        semantic_linking_agent = SemanticLinkingAgent(context)
         supervisor_agent = SupervisorAgent(context)
         token_analyst = TokenAnalystAgent(context)
         
@@ -141,12 +143,18 @@ def main() -> int:
         if not context.get("parsing_completed"):
             raise Exception("Falha na etapa de parsing")
         
-        # 3. Análise de tokens
-        logger.info("Etapa 3: Análise de tokens")
+        # 3. Vinculação semântica
+        logger.info("Etapa 3: Vinculação semântica entre texto e código")
+        context = semantic_linking_agent.run()
+        if not context.get("semantic_linking_completed"):
+            raise Exception("Falha na etapa de vinculação semântica")
+        
+        # 4. Análise de tokens
+        logger.info("Etapa 4: Análise de tokens")
         context = token_analyst.run()
         
-        # 4. Supervisão e relatório final
-        logger.info("Etapa 4: Geração de relatório final")
+        # 5. Supervisão e relatório final
+        logger.info("Etapa 5: Geração de relatório final")
         context = supervisor_agent.run()
         
         console.print("[bold green]✓[/bold green] Pipeline executado com sucesso!")

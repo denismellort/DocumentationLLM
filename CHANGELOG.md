@@ -65,3 +65,25 @@ Todas as mudanças notáveis deste projeto serão documentadas aqui.
 - Download de repositórios Git
 - Identificação e processamento básico de arquivos de documentação
 - Geração de relatórios iniciais
+
+## [0.1.4] - 2025-05-24
+
+### Adicionado
+- Implementação completa do SemanticLinkingAgent
+  - Processamento de documentos parseados com GPT-4
+  - Vinculação semântica entre texto e código
+  - Configurações flexíveis via config.yaml
+  - Integração com pipeline principal
+  - Logging detalhado e tratamento de erros
+  - Estatísticas de processamento
+- Novas configurações no config.yaml para o SemanticLinkingAgent
+- Documentação atualizada no CONTEXT.md
+
+### Alterado
+- Pipeline principal agora inclui etapa de vinculação semântica
+- Ordem das etapas ajustada para acomodar o novo agente
+- Melhorias na documentação e logs
+
+### Corrigido
+- Problemas de tipagem no SemanticLinkingAgent
+- Integração com outros agentes no pipeline

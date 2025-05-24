@@ -38,10 +38,14 @@ Este arquivo contém um registro de tarefas a serem implementadas e bugs a serem
 - [ ] Otimizar processamento de documentos grandes
 
 ### Agente de Vinculação Semântica (SemanticLinkingAgent)
-- [ ] Implementação inicial
-- [ ] Conexão com a API OpenAI para vinculação semântica
-- [ ] Preservação de contexto entre texto e código
-- [ ] Estruturação hierárquica de conteúdo
+- [x] Implementação inicial
+- [x] Conexão com a API OpenAI para vinculação semântica
+- [x] Preservação de contexto entre texto e código
+- [x] Estruturação hierárquica de conteúdo
+- [ ] Implementar cache de prompts/respostas
+- [ ] Otimizar uso de tokens
+- [ ] Adicionar mais tipos de relações semânticas
+- [ ] Melhorar detecção de contexto entre documentos
 
 ### Agente de Geração de Saída (OutputGenerationAgent)
 - [ ] Implementação inicial
