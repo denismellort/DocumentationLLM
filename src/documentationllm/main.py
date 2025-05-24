@@ -63,7 +63,7 @@ def main() -> int:
     parser.add_argument(
         "--version",
         action="version",
-        version="DocumentationLLM v0.1.2"
+        version="DocumentationLLM v0.1.3"
     )
     
     args = parser.parse_args()
@@ -74,7 +74,7 @@ def main() -> int:
     # Se nenhuma fonte foi fornecida, mostrar ajuda
     if not args.source:
         console.print(Panel(
-            "[bold yellow]DocumentationLLM v0.1.2[/bold yellow]\n\n"
+            "[bold yellow]DocumentationLLM v0.1.3[/bold yellow]\n\n"
             "Processador Inteligente de Documentação para LLMs com Supervisão de IA\n\n"
             "[cyan]Uso:[/cyan]\n"
             "  docllm <url-ou-caminho> [opções]\n\n"
@@ -105,7 +105,7 @@ def main() -> int:
         console.print(Panel(
             f"[bold cyan]Processando:[/bold cyan] {args.source}\n"
             f"[bold cyan]Configuração:[/bold cyan] {args.config}",
-            title="[bold green]DocumentationLLM v0.1.2[/bold green]",
+            title="[bold green]DocumentationLLM v0.1.3[/bold green]",
             border_style="green"
         ))
         
