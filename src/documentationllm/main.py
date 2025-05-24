@@ -94,8 +94,15 @@ def main() -> int:
         # Carregar configurações
         config = load_config(args.config)
         
-        # Inicializar logger
-        logger = DocumentationLogger(config)
+        # Garantir que log_level é string
+        log_level = config["processing"].get("log_level", "info")
+        if isinstance(log_level, dict):
+            # Corrigir caso venha como dict por erro de merge/config
+            log_level = log_level.get("value", "info")
+        if not isinstance(log_level, str):
+            log_level = str(log_level)
+        print(f"[DEBUG] log_level usado para o logger: {log_level}")
+        logger = DocumentationLogger(log_level=log_level)
         if args.verbose:
             logger.set_verbose(True)
         
