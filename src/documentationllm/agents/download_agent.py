@@ -521,12 +521,12 @@ class DownloadAgent:
             
             # Clonar repositório
             repo_dir = self._clone_repository(repo_info)
-            
-            # Se subdiretório foi especificado, ajustar repo_dir
+            # Se subdiretório foi especificado, ajustar repo_dir para o subdiretório dentro do temp_dir
             subdir = repo_info.get("subdir")
             if subdir:
                 repo_dir = os.path.join(repo_dir, subdir)
-            
+                if not os.path.exists(repo_dir):
+                    raise ValueError(f"Subdiretório '{subdir}' não encontrado em {repo_dir}")
             # Processar arquivos de documentação
             doc_files = self._process_documentation_files(repo_dir)
             
