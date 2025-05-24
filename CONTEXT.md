@@ -343,3 +343,11 @@ Todas as dependências agora usam versões específicas (==) ao invés de (>=) p
 [2025-05-24T02:15:01.839309] Buscando arquivos de documentação em subdiretório: data/temp/playwright/docs
 
 [2025-05-24T02:15:01.965574] Arquivos de documentação encontrados: 172
+
+[2025-05-24T02:16:21.247277] Iniciando download do repositório: https://github.com/openai/openai-python
+
+[2025-05-24T02:16:21.248037] Repositório identificado: github - openai/openai-python
+
+[2025-05-24T02:16:22.287252] Repositório clonado em: data/temp/openai-python
+
+[2025-05-24T02:16:22.301136] Arquivos de documentação encontrados: 10
