@@ -38,12 +38,20 @@ data/temp/*
 !data/temp/.gitkeep
 
 # Relatórios, históricos e outputs
-*.md
-*.json
-!.cursor/*.json
-!.cursor/*.json.template
-*.csv
-*.log
+data/reports/*.md
+data/reports/*.json
+data/reports/*.csv
+data/reports/*.log
+
+# Não ignorar arquivos de documentação importantes
+!README.md
+!CHANGELOG.md
+!CONTEXT.md
+!CONTRIBUTING.md
+!TODO.md
+!LICENSE.md
+!docs/*.md
+!docs/**/*.md
 
 # Logs
 logs/*
