@@ -4,6 +4,9 @@ pydantic==2.4.2
 httpx==0.25.0
 python-dotenv==1.0.0
 PyYAML==6.0.1
+markdown==3.5.1
+beautifulsoup4==4.12.2
+docutils==0.20.1
 
 # Formatação e qualidade de código
 black==23.7.0

@@ -1,0 +1,27 @@
+# Arquivos temporários de teste
+temp/
+processed/
+
+# Cache do pytest
+__pycache__/
+.pytest_cache/
+
+# Cobertura de código
+.coverage
+htmlcov/
+
+# Arquivos temporários
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.py[cod]
+*$py.class
+
+# Diretórios de ambiente virtual
+venv/
+env/
+.env/
+
+# Arquivos de log
+*.log

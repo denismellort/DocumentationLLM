@@ -23,12 +23,19 @@ Este arquivo contém um registro de tarefas a serem implementadas e bugs a serem
 - [ ] Melhorar mecanismo de detecção de documentação relevante
 
 ### Agente de Parsing (ParsingAgent)
-- [ ] Implementação inicial do parser
-- [ ] Extração de texto e blocos de código
-- [ ] Identificação de metadados (títulos, seções, etc.)
-- [ ] Suporte a diferentes formatos (Markdown, reStructuredText, HTML)
-- [ ] Estruturação hierárquica do conteúdo extraído
+- [x] Implementação inicial do parser
+- [x] Extração de texto e blocos de código
+- [x] Identificação de metadados (títulos, seções, etc.)
+- [x] Suporte a diferentes formatos (Markdown)
+- [x] Estruturação hierárquica do conteúdo extraído
+- [ ] Suporte a reStructuredText
+- [ ] Suporte a HTML
+- [ ] Suporte a texto plano
 - [ ] Detecção de relações entre documentos
+- [ ] Implementar tracking de linhas para seções
+- [ ] Melhorar sanitização de HTML
+- [ ] Adicionar suporte a mais metadados
+- [ ] Otimizar processamento de documentos grandes
 
 ### Agente de Vinculação Semântica (SemanticLinkingAgent)
 - [ ] Implementação inicial
