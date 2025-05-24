@@ -323,3 +323,13 @@ Todas as dependências agora usam versões específicas (==) ao invés de (>=) p
    - [ ] Setup MkDocs
    - [ ] Documentação de arquitetura
    - [ ] ADRs iniciais
+
+[2025-05-24T02:13:41.902826] Iniciando download do repositório: https://github.com/microsoft/playwright/tree/main/docs/
+
+[2025-05-24T02:13:41.903645] Repositório identificado: github - microsoft/playwright
+
+[2025-05-24T02:13:49.151831] Repositório clonado em: data/temp/playwright
+
+[2025-05-24T02:13:49.151883] Buscando arquivos de documentação em subdiretório: data/temp/playwright/docs
+
+[2025-05-24T02:13:49.155578] Arquivos de documentação encontrados: 0
