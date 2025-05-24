@@ -41,6 +41,7 @@ def main() -> int:
     """Ponto de entrada principal para o DocumentationLLM."""
     # Carregar variáveis de ambiente
     load_dotenv()
+    print("[DEBUG] OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY"))
     
     # Configurar parser de argumentos
     parser = argparse.ArgumentParser(
