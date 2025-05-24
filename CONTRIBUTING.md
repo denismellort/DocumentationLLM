@@ -126,3 +126,143 @@ Se você tiver dúvidas ou precisar de ajuda, abra um issue ou entre em contato 
 ---
 
 Agradecemos suas contribuições para tornar o DocumentationLLM uma ferramenta melhor para todos!
+
+# Guia de Contribuição
+
+## 🔄 Processo de Pull Request
+
+### O que é um Pull Request?
+Um Pull Request (PR) é uma proposta de mudança no código que permite que outros desenvolvedores revisem suas alterações antes de serem incorporadas ao projeto principal. É como dizer "Ei, fiz algumas mudanças aqui, podem dar uma olhada?".
+
+### Por que usamos Pull Requests?
+1. **Revisão de Código**: Permite que outros desenvolvedores revisem suas mudanças
+2. **Qualidade**: Garante que o código segue os padrões do projeto
+3. **Documentação**: Registra o histórico de mudanças
+4. **Integração**: Permite testes automatizados antes da integração
+
+### Como criar um Pull Request
+
+1. **Clone o Repositório**:
+   ```bash
+   git clone [URL_DO_REPOSITÓRIO]
+   cd [NOME_DO_PROJETO]
+   ```
+
+2. **Crie uma Branch**:
+   ```bash
+   git checkout -b feature/sua-feature
+   ```
+
+3. **Faça suas Mudanças**:
+   - Escreva/modifique o código
+   - Adicione/atualize testes
+   - Atualize a documentação
+
+4. **Commit das Mudanças**:
+   ```bash
+   git add .
+   git commit -m "feat: descrição da sua mudança"
+   ```
+
+5. **Push para o GitHub**:
+   ```bash
+   git push origin feature/sua-feature
+   ```
+
+6. **Crie o Pull Request**:
+   - Vá para o GitHub
+   - Clique em "New Pull Request"
+   - Selecione sua branch
+   - Preencha a descrição
+   - Clique em "Create Pull Request"
+
+### Estrutura do Pull Request
+
+Todo PR deve incluir:
+
+1. **Título**: Breve descrição do que foi feito
+2. **Descrição**: Explicação detalhada das mudanças
+3. **Checklist**:
+   - [ ] Testes adicionados/atualizados
+   - [ ] Documentação atualizada
+   - [ ] Código formatado (Black/isort)
+   - [ ] Type hints adicionados
+   - [ ] Revisado por pelo menos 1 desenvolvedor
+
+### Processo de Revisão
+
+1. **Revisores**: Pelo menos 1 desenvolvedor deve aprovar
+2. **CI/CD**: Todos os testes devem passar
+3. **Formatação**: Código deve seguir padrões (Black/isort)
+4. **Tipos**: Mypy deve passar sem erros
+
+### Após a Aprovação
+
+1. O PR será mesclado na branch principal
+2. A branch feature será deletada
+3. As mudanças serão deployadas automaticamente
+
+## 🛠️ Ambiente de Desenvolvimento
+
+### Configuração Inicial
+
+1. **Dependências**:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # Linux/Mac
+   # ou
+   .\venv\Scripts\activate  # Windows
+   pip install -r requirements.txt
+   ```
+
+2. **Pre-commit**:
+   ```bash
+   pre-commit install
+   ```
+
+3. **Docker** (opcional):
+   ```bash
+   docker-compose up -d
+   ```
+
+### Testes
+
+```bash
+pytest
+```
+
+### Formatação
+
+```bash
+black .
+isort .
+```
+
+## 📝 Convenções
+
+### Commits
+
+Seguimos o padrão Conventional Commits:
+
+- `feat`: Nova funcionalidade
+- `fix`: Correção de bug
+- `docs`: Documentação
+- `style`: Formatação
+- `refactor`: Refatoração
+- `test`: Testes
+- `chore`: Manutenção
+
+### Branches
+
+- `feature/*`: Novas funcionalidades
+- `fix/*`: Correções
+- `docs/*`: Documentação
+- `refactor/*`: Refatoração
+
+## ⚠️ Notas Importantes
+
+1. Nunca faça commit direto na branch principal
+2. Mantenha os PRs pequenos e focados
+3. Escreva testes para novas funcionalidades
+4. Atualize a documentação quando necessário
+5. Use type hints em código novo

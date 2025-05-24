@@ -235,3 +235,91 @@ git push
 - Sempre verifique com `git status` se há arquivos pendentes antes de commitar.
 - Use `git log -1` para conferir o último commit e garantir que está sincronizado com o remoto.
 - Após o push, confirme visualmente no terminal e no GitHub se o commit está visível e atualizado.
+
+## 🏗️ Infraestrutura Atual
+
+### Arquivos de Configuração
+
+1. **pyproject.toml**
+   - Substituiu o setup.py
+   - Configurações centralizadas para:
+     - Black (formatação)
+     - isort (organização de imports)
+     - mypy (verificação de tipos)
+     - pytest (testes)
+
+2. **docker-compose.yml**
+   - Serviços configurados:
+     - Aplicação principal
+     - PostgreSQL
+     - Redis
+   - Volumes persistentes
+   - Rede isolada
+
+3. **.pre-commit-config.yaml**
+   - Hooks de qualidade:
+     - Black
+     - isort
+     - mypy
+     - bandit (segurança)
+     - flake8 (linting)
+
+### Dependências
+
+Todas as dependências agora usam versões específicas (==) ao invés de (>=) para garantir builds reproduzíveis.
+
+### Containers
+
+1. **Dockerfile**
+   - Base: Python 3.9-slim
+   - Configuração para desenvolvimento
+   - Testes integrados no build
+
+2. **Serviços**
+   - PostgreSQL 15
+   - Redis 7
+   - Volumes persistentes
+
+## 📊 Métricas Atuais
+
+- Arquivos analisados: 25
+- LOC Python: ~4,300
+- Funções/Métodos: 70-72
+- Cobertura de tipos: 17-36%
+- Arquivos > 500 linhas: 3
+
+## 🎯 Objetivos de Curto Prazo
+
+1. **Qualidade de Código**
+   - [ ] Aumentar cobertura de tipos para ≥60%
+   - [ ] Implementar testes automatizados
+   - [ ] Configurar CI/CD
+   - [ ] Refatorar arquivos grandes
+
+2. **Infraestrutura**
+   - [x] Migrar para pyproject.toml
+   - [x] Configurar Docker
+   - [x] Adicionar pre-commit hooks
+   - [ ] Implementar CI/CD com GitHub Actions
+
+3. **Documentação**
+   - [ ] Configurar MkDocs
+   - [ ] Criar ADRs
+   - [x] Atualizar guias de contribuição
+
+## 🚀 Próximos Passos
+
+1. **Sprint 1: Infraestrutura**
+   - [x] Setup inicial (pyproject.toml, Docker)
+   - [ ] Configuração CI/CD
+   - [ ] Testes básicos
+
+2. **Sprint 2: Qualidade**
+   - [ ] Refatoração de código
+   - [ ] Aumento de cobertura de tipos
+   - [ ] Implementação de testes
+
+3. **Sprint 3: Documentação**
+   - [ ] Setup MkDocs
+   - [ ] Documentação de arquitetura
+   - [ ] ADRs iniciais
