@@ -125,7 +125,21 @@ def main() -> int:
             "version_control": version_control,
             "execution_id": datetime.now().strftime("%Y%m%d_%H%M%S"),
             "repo_url": args.source,
-            "directories": config["directories"]
+            "directories": config["directories"],
+            "stats": {
+                "tokens_used": 0,
+                "estimated_cost": 0.0,
+                "steps_completed": [],
+                "steps_failed": [],
+                "start_time": datetime.now(),
+                "end_time": None,
+            },
+            "token_stats": {
+                "models": {},
+                "steps": {},
+                "total_tokens": 0,
+                "total_cost": 0.0
+            }
         }
         
         # Inicializar agentes
