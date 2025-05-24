@@ -551,7 +551,10 @@ class DownloadAgent:
             
             # Adicionar à lista de etapas concluídas
             self.context["stats"]["steps_completed"].append("download")
-            
+
+            # Marcar download como concluído
+            self.context["download_completed"] = True
+
             return self.context
             
         except Exception as e:
