@@ -164,6 +164,7 @@ def main() -> int:
         context = parsing_agent.run()
         if not context.get("parsing_completed"):
             raise Exception("Falha na etapa de parsing")
+        print(f"[cyan][DEBUG] Quantidade de documentos em context['parsed_documents']: {len(context.get('parsed_documents', {}))}")
 
         # 2.5 Vinculação semântica (IA)
         logger.info("Etapa 2.5: Vinculação semântica (IA)")

@@ -432,7 +432,8 @@ class ParsingAgent:
             
             # Salvar resultados
             self.save_results(processed_docs)
-            
+            # Log de depuração para mostrar arquivos parseados
+            console.print(f"[magenta][DEBUG] Arquivos parseados pelo ParsingAgent: {list(processed_docs.keys())}[/magenta]")
             # Garantir que o contexto seja atualizado com os documentos processados em memória
             self.context["parsed_documents"] = processed_docs
             self.context["parsing_completed"] = True

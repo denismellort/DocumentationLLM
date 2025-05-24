@@ -375,3 +375,11 @@ Todas as dependências agora usam versões específicas (==) ao invés de (>=) p
 [2025-05-24T02:37:42.967319] Repositório clonado em: data/temp/openai-python
 
 [2025-05-24T02:37:42.981466] Arquivos de documentação encontrados: 10
+
+[2025-05-24T02:39:36.418817] Iniciando download do repositório: https://github.com/openai/openai-python
+
+[2025-05-24T02:39:36.419602] Repositório identificado: github - openai/openai-python
+
+[2025-05-24T02:39:37.428627] Repositório clonado em: data/temp/openai-python
+
+[2025-05-24T02:39:37.445606] Arquivos de documentação encontrados: 10
