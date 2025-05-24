@@ -117,7 +117,6 @@ class DownloadAgent:
         # Identificar tipo de repositório e extrair informações específicas
         if "github.com" in parsed_url.netloc:
             repo_info["type"] = "github"
-            # Extrair owner/name do caminho
             path_parts = repo_info["path"].split("/")
             if len(path_parts) >= 2:
                 repo_info["owner"] = path_parts[0]
@@ -126,12 +125,15 @@ class DownloadAgent:
                 if len(path_parts) >= 4 and path_parts[2] == "tree":
                     repo_info["branch"] = path_parts[3]
                     if len(path_parts) > 4:
-                        # Subdiretório pode conter barras
                         repo_info["subdir"] = "/".join(path_parts[4:])
                     else:
                         repo_info["subdir"] = None
+                    # Corrigir a URL para ser sempre a raiz do repositório
+                    repo_info["url"] = f"https://github.com/{repo_info['owner']}/{repo_info['name']}.git"
                 else:
                     repo_info["subdir"] = None
+                    # Corrigir a URL para ser sempre a raiz do repositório
+                    repo_info["url"] = f"https://github.com/{repo_info['owner']}/{repo_info['name']}.git"
         
         elif "gitlab.com" in parsed_url.netloc:
             repo_info["type"] = "gitlab"
