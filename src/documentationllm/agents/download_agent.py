@@ -203,8 +203,7 @@ class DownloadAgent:
                 Repo.clone_from(
                     repo_info["url"],
                     originals_dir,
-                    branch=repo_info["branch"],
-                    depth=1
+                    branch=repo_info["branch"]
                 )
                 if self.logger:
                     self.logger.info(f"Repositório clonado com sucesso em: {originals_dir}")
@@ -525,6 +524,7 @@ class DownloadAgent:
             subdir = repo_info.get("subdir")
             if subdir:
                 repo_dir = os.path.join(repo_dir, subdir)
+                print(f"[DEBUG] Buscando arquivos de documentação em subdiretório: {repo_dir}")
                 if not os.path.exists(repo_dir):
                     raise ValueError(f"Subdiretório '{subdir}' não encontrado em {repo_dir}")
             # Processar arquivos de documentação
