@@ -11,9 +11,10 @@ e análise de tokens/custos.
 import os
 import sys
 import argparse
-import yaml
 from datetime import datetime
-from dotenv import load_dotenv
+from pathlib import Path
+
+import yaml
 from rich.console import Console
 from rich.panel import Panel
 
@@ -25,24 +26,14 @@ from documentationllm.agents.supervisor_agent import SupervisorAgent
 from documentationllm.agents.token_analyst_agent import TokenAnalystAgent
 
 # Importar utilitários
-from documentationllm.utils.env_utils import load_config
-from documentationllm.utils.logger import DocumentationLogger
-from documentationllm.utils.version_control import VersionControl
+from documentationllm.utils.config import Config
+from documentationllm.utils.logging import setup_logger
 
-# Adicionar o diretório raiz ao path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# ... restante do código igual ao src/main.py ... 
-
-# -----------------------------------------------
-# Função principal exposta para o CLI
-# -----------------------------------------------
+# Configurar logger
+logger = setup_logger(__name__)
 
 def main() -> int:
     """Ponto de entrada principal para o DocumentationLLM."""
-    # Carregar variáveis de ambiente
-    load_dotenv()
-    
     # Configurar parser de argumentos
     parser = argparse.ArgumentParser(
         description="DocumentationLLM - Processador Inteligente de Documentação para LLMs"
@@ -65,7 +56,7 @@ def main() -> int:
     parser.add_argument(
         "--version",
         action="version",
-        version="DocumentationLLM v0.1.3"
+        version="DocumentationLLM v0.1.0"
     )
     
     args = parser.parse_args()
@@ -76,7 +67,7 @@ def main() -> int:
     # Se nenhuma fonte foi fornecida, mostrar ajuda
     if not args.source:
         console.print(Panel(
-            "[bold yellow]DocumentationLLM v0.1.3[/bold yellow]\n\n"
+            "[bold yellow]DocumentationLLM v0.1.0[/bold yellow]\n\n"
             "Processador Inteligente de Documentação para LLMs com Supervisão de IA\n\n"
             "[cyan]Uso:[/cyan]\n"
             "  docllm <url-ou-caminho> [opções]\n\n"
@@ -93,32 +84,26 @@ def main() -> int:
     
     try:
         # Carregar configurações
-        config = load_config(args.config)
+        config = Config(args.config)
         
-        # Inicializar logger
-        logger = DocumentationLogger(config)
+        # Ajustar nível de log se modo verboso
         if args.verbose:
-            logger.set_verbose(True)
-        
-        # Criar controle de versão
-        version_control = VersionControl(config, logger)
+            logger.setLevel("DEBUG")
         
         # Mostrar banner inicial
         console.print(Panel(
             f"[bold cyan]Processando:[/bold cyan] {args.source}\n"
             f"[bold cyan]Configuração:[/bold cyan] {args.config}",
-            title="[bold green]DocumentationLLM v0.1.3[/bold green]",
+            title="[bold green]DocumentationLLM v0.1.0[/bold green]",
             border_style="green"
         ))
         
         # Criar contexto inicial
         context = {
             "config": config,
-            "logger": logger,
-            "version_control": version_control,
             "execution_id": datetime.now().strftime("%Y%m%d_%H%M%S"),
             "repo_url": args.source,
-            "directories": config["directories"]
+            "directories": config.get("directories")
         }
         
         # Inicializar agentes
