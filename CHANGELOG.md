@@ -14,6 +14,23 @@ Todas as mudanças notáveis deste projeto serão documentadas aqui.
 - TODO para supervisor de histórico de clonagens
 - Padrão de releases, versionamento e contextualização para GPTs e humanos
 
+## [0.1.3] - 2025-05-24
+
+### Corrigido
+- **Problema crítico de importação em Linux/Mac**: Reestruturado o projeto movendo `agents/`, `utils/` e `prompts/` para dentro do pacote `documentationllm/`
+- **Importações relativas removidas**: Eliminadas todas as importações relativas com `..` que causavam erro "attempted relative import beyond top-level package"
+- **Nome do arquivo de configuração**: Renomeado `environment.example` para `.env.example` conforme documentado no README
+- **Interface CLI melhorada**: Agora o comando `docllm` mostra uma interface amigável quando executado sem argumentos
+- **Compatibilidade cross-platform**: O projeto agora funciona corretamente em Windows, Linux e macOS
+
+### Adicionado
+- **Pré-requisitos no README**: Documentada a necessidade de instalar `python3-venv` em sistemas Debian/Ubuntu
+- **Arquivo principal `src/main.py`**: Criado arquivo principal do pipeline com interface completa
+
+### Alterado
+- **Estrutura de diretórios**: Reorganizada para seguir as melhores práticas de empacotamento Python
+- **Arquivo `cli.py` simplificado**: Removida lógica de tratamento de erros desnecessária
+
 ## [0.1.2] - 2025-05-22
 ### Adicionado
 - Detecção inteligente e dinâmica de diretórios de documentação

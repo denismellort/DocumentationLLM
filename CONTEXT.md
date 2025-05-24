@@ -126,6 +126,12 @@ Alterações: (1) Corrigida a discrepância nos tokens reportados entre diferent
 Próximos passos: Iniciar desenvolvimento do Agente de Parsing, que será responsável por extrair e estruturar o conteúdo dos arquivos de documentação, identificando hierarquia, relações entre documentos e distinção entre texto explicativo e blocos de código.
 Responsável: Assistente IA @cursor
 
+[2025-05-24] - Correção de compatibilidade cross-platform (v0.1.3)
+Motivação: O projeto apresentava erro crítico "attempted relative import beyond top-level package" em sistemas Linux/Mac, impedindo completamente o uso do comando `docllm`.
+Alterações: (1) Reestruturação completa do projeto, movendo `agents/`, `utils/` e `prompts/` para dentro do pacote `documentationllm/`; (2) Remoção de todas as importações relativas com `..`; (3) Criação do arquivo principal `src/main.py` com interface CLI completa; (4) Renomeação de `environment.example` para `.env.example` conforme documentado; (5) Adição de pré-requisitos no README para sistemas Debian/Ubuntu.
+Resultado: O projeto agora funciona corretamente em Windows, Linux e macOS com uma interface CLI amigável e intuitiva.
+Responsável: Assistente IA @cursor
+
 **Este documento deve ser atualizado regularmente com novas decisões e contextos!**
 
 ## Organização dos Dados e Limpeza (2024)
