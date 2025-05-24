@@ -36,17 +36,97 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 # Função principal exposta para o CLI
 # -----------------------------------------------
 
-def main() -> int:  # noqa: D401
-    """Ponto de entrada principal para o DocumentationLLM.
-
-    Esta função é importada pelo wrapper em `documentationllm.cli`.
-    Por enquanto, ela apenas imprime uma mensagem informativa e encerra
-    com código de status 0. A lógica completa do pipeline deve ser
-    implementada aqui em versões futuras.
-    """
+def main() -> int:
+    """Ponto de entrada principal para o DocumentationLLM."""
+    # Carregar variáveis de ambiente
+    load_dotenv()
+    
+    # Configurar parser de argumentos
+    parser = argparse.ArgumentParser(
+        description="DocumentationLLM - Processador Inteligente de Documentação para LLMs"
+    )
+    parser.add_argument(
+        "source",
+        nargs="?",
+        help="URL do repositório Git ou caminho local para processar"
+    )
+    parser.add_argument(
+        "-c", "--config",
+        default="config.yaml",
+        help="Arquivo de configuração (padrão: config.yaml)"
+    )
+    parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="Modo verboso"
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="DocumentationLLM v0.1.2"
+    )
+    
+    args = parser.parse_args()
+    
+    # Inicializar console
     console = Console()
-    console.print(Panel("[bold green]DocumentationLLM inicializado com sucesso![/bold green]"))
-    # TODO: adicionar o fluxo de execução real do pipeline
+    
+    # Se nenhuma fonte foi fornecida, mostrar ajuda
+    if not args.source:
+        console.print(Panel(
+            "[bold yellow]DocumentationLLM v0.1.2[/bold yellow]\n\n"
+            "Processador Inteligente de Documentação para LLMs com Supervisão de IA\n\n"
+            "[cyan]Uso:[/cyan]\n"
+            "  docllm <url-ou-caminho> [opções]\n\n"
+            "[cyan]Exemplos:[/cyan]\n"
+            "  docllm https://github.com/usuario/repo.git\n"
+            "  docllm ./meu-projeto-local\n"
+            "  docllm . -v\n\n"
+            "[cyan]Para mais informações:[/cyan]\n"
+            "  docllm --help",
+            title="[bold green]Bem-vindo ao DocumentationLLM![/bold green]",
+            border_style="green"
+        ))
+        return 0
+    
+    try:
+        # Carregar configurações
+        config = load_config(args.config)
+        
+        # Inicializar logger
+        logger = DocumentationLogger(config)
+        if args.verbose:
+            logger.set_verbose(True)
+        
+        # Criar controle de versão
+        version_control = VersionControl(config, logger)
+        
+        # Mostrar banner inicial
+        console.print(Panel(
+            f"[bold cyan]Processando:[/bold cyan] {args.source}\n"
+            f"[bold cyan]Configuração:[/bold cyan] {args.config}",
+            title="[bold green]DocumentationLLM v0.1.2[/bold green]",
+            border_style="green"
+        ))
+        
+        # Executar pipeline
+        logger.info("Iniciando pipeline de processamento...")
+        
+        # Por enquanto, apenas executa o agente de download
+        # TODO: Implementar pipeline completo
+        download_agent = DownloadAgent(config, logger, version_control)
+        result = download_agent.execute(source=args.source)
+        
+        if result:
+            console.print("[bold green]✓[/bold green] Pipeline executado com sucesso!")
+        else:
+            console.print("[bold red]✗[/bold red] Pipeline falhou!")
+            return 1
+            
+    except Exception as e:
+        console.print(f"[bold red]Erro:[/bold red] {str(e)}")
+        return 1
+    
     return 0
 
 
