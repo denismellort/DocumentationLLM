@@ -9,6 +9,7 @@ from openai.types.chat import ChatCompletion
 
 from ..utils.config import Config
 from ..utils.logging import setup_logger
+from ..utils.cache import SemanticCache
 
 logger = setup_logger(__name__)
 
@@ -33,6 +34,9 @@ class SemanticLinkingAgent:
         self.batch_size = self.config.get("agents.semantic_linking.batch_size", 5)
         self.retry_attempts = self.config.get("agents.semantic_linking.retry_attempts", 3)
         
+        # Inicializa o cache
+        self.cache = SemanticCache(self.config)
+        
         # Garante que a chave da API está configurada
         if not openai.api_key:
             openai.api_key = self.config.get("openai.api_key")
@@ -56,28 +60,42 @@ class SemanticLinkingAgent:
             # Processa cada documento
             linked_documents = []
             total_documents = len(self.context["parsed_documents"])
+            cache_hits = 0
+            cache_misses = 0
             
             for i, doc in enumerate(self.context["parsed_documents"], 1):
                 logger.info(f"Processando documento {i}/{total_documents}: {doc.get('path', 'unknown')}")
                 try:
                     processed_doc = self.process_document(doc)
                     linked_documents.append(processed_doc)
+                    
+                    # Atualiza estatísticas de cache
+                    if "cache_hit" in processed_doc.get("processing_info", {}):
+                        cache_hits += processed_doc["processing_info"]["cache_hit"]
+                        cache_misses += processed_doc["processing_info"]["cache_miss"]
+                        
                 except Exception as e:
                     logger.error(f"Erro ao processar documento {doc.get('path')}: {e}")
                     # Adiciona o documento original em caso de erro
                     linked_documents.append(doc)
+                    cache_misses += 1
             
             # Atualiza o contexto
             self.context["linked_documents"] = linked_documents
             self.context["semantic_linking_completed"] = True
             
             # Registra estatísticas
+            cache_stats = self.cache.get_stats()
             self.context["semantic_linking_stats"] = {
                 "total_documents": total_documents,
                 "successful_documents": len([d for d in linked_documents if "semantic_links" in d]),
                 "failed_documents": len([d for d in linked_documents if "semantic_links" not in d]),
                 "model_used": self.model,
-                "timestamp": str(datetime.now())
+                "timestamp": str(datetime.now()),
+                "cache_hits": cache_hits,
+                "cache_misses": cache_misses,
+                "cache_hit_ratio": cache_hits / (cache_hits + cache_misses) if cache_hits + cache_misses > 0 else 0,
+                "cache_stats": cache_stats
             }
             
             logger.info("Processamento de vinculação semântica concluído com sucesso")
@@ -104,9 +122,17 @@ class SemanticLinkingAgent:
             
             # Processa cada seção para criar vínculos
             linked_sections = []
+            cache_hit = 0
+            cache_miss = 0
+            
             for section in sections:
                 linked_section = self._process_section(section)
                 linked_sections.append(linked_section)
+                
+                # Atualiza contadores de cache
+                if "cache_hit" in linked_section.get("processing_info", {}):
+                    cache_hit += linked_section["processing_info"]["cache_hit"]
+                    cache_miss += linked_section["processing_info"]["cache_miss"]
             
             # Monta o documento final com os vínculos
             processed_document = {
@@ -115,7 +141,10 @@ class SemanticLinkingAgent:
                 "original_path": parsed_document.get("path", ""),
                 "processing_info": {
                     "model": self.model,
-                    "temperature": self.temperature
+                    "temperature": self.temperature,
+                    "cache_hit": cache_hit,
+                    "cache_miss": cache_miss,
+                    "cache_hit_ratio": cache_hit / (cache_hit + cache_miss) if cache_hit + cache_miss > 0 else 0
                 }
             }
             
@@ -169,10 +198,29 @@ class SemanticLinkingAgent:
         if not section["text"] or not section["code"]:
             return section
         
-        # Prepara o prompt para a OpenAI
-        prompt = self._prepare_prompt(section)
+        # Prepara o texto e código para cache
+        text = "\n".join(section["text"])
+        code = "\n".join(block["content"] for block in section["code"])
+        
+        # Tenta buscar no cache
+        cached_response = self.cache.get(text, code)
+        if cached_response:
+            processed_section = {
+                "text": section["text"],
+                "code": section["code"],
+                "semantic_links": cached_response,
+                "processing_info": {
+                    "cache_hit": 1,
+                    "cache_miss": 0,
+                    "from_cache": True
+                }
+            }
+            return processed_section
         
         try:
+            # Prepara o prompt para a OpenAI
+            prompt = self._prepare_prompt(section)
+            
             # Faz a chamada à API da OpenAI
             response = openai.chat.completions.create(
                 model=self.model,
@@ -187,11 +235,19 @@ class SemanticLinkingAgent:
             # Processa a resposta
             semantic_links = self._parse_openai_response(response)
             
+            # Salva no cache
+            self.cache.set(text, code, semantic_links)
+            
             # Adiciona os vínculos à seção
             processed_section = {
                 "text": section["text"],
                 "code": section["code"],
-                "semantic_links": semantic_links
+                "semantic_links": semantic_links,
+                "processing_info": {
+                    "cache_hit": 0,
+                    "cache_miss": 1,
+                    "from_cache": False
+                }
             }
             
             return processed_section

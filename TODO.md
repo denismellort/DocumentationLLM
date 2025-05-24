@@ -42,7 +42,7 @@ Este arquivo contém um registro de tarefas a serem implementadas e bugs a serem
 - [x] Conexão com a API OpenAI para vinculação semântica
 - [x] Preservação de contexto entre texto e código
 - [x] Estruturação hierárquica de conteúdo
-- [ ] Implementar cache de prompts/respostas
+- [x] Implementar cache de prompts/respostas
 - [ ] Otimizar uso de tokens
 - [ ] Adicionar mais tipos de relações semânticas
 - [ ] Melhorar detecção de contexto entre documentos
@@ -163,6 +163,17 @@ Este arquivo contém um registro de tarefas a serem implementadas e bugs a serem
 
 ### Implementar supervisor de histórico de clonagens
 - [ ] Implementar supervisor de histórico de clonagens: registrar em memória/arquivo quantas vezes cada repositório foi clonado e em quais datas, para uso futuro por uma IA administradora.
+
+### Sistema de Cache
+- [x] Implementação básica do cache
+- [x] Cache em memória e disco
+- [x] TTL configurável
+- [x] Estatísticas e métricas
+- [x] Integração com SemanticLinkingAgent
+- [ ] Persistência assíncrona
+- [ ] Compressão de dados
+- [ ] Backup automático
+- [ ] Dashboard de métricas
 
 ---
 

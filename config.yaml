@@ -26,7 +26,8 @@ scaling:
 directories:
   originals: data/originals
   processed: data/processed
-  temp: data/temp 
+  temp: data/temp
+  cache: data/cache
 
 # Configurações dos agentes
 agents:
@@ -36,4 +37,10 @@ agents:
     max_tokens: 4000
     batch_size: 5  # Número de seções processadas por lote
     retry_attempts: 3  # Tentativas em caso de erro na API
-    confidence_threshold: 0.8  # Limiar mínimo de confiança para vínculos semânticos 
+    confidence_threshold: 0.8  # Limiar mínimo de confiança para vínculos semânticos
+
+# Configurações de cache
+cache:
+  ttl_hours: 24  # Tempo de vida das entradas do cache em horas
+  enabled: true  # Se o cache está ativado
+  max_entries: 1000  # Número máximo de entradas no cache 

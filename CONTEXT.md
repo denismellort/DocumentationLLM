@@ -516,3 +516,93 @@ Os testes unitários para o SemanticLinkingAgent foram implementados com as segu
    - Refinar mocks para mais casos
    - Adicionar testes de edge cases
    - Implementar testes de regressão
+
+## [Registro de Implementação - Sistema de Cache - Data/Hora: 2025-05-24 19:00:00 GMT-3]
+
+### Implementação do Sistema de Cache
+
+O sistema de cache foi implementado para otimizar o uso de tokens e reduzir chamadas repetitivas à API da OpenAI:
+
+1. **Estrutura do Cache**:
+   - Módulo: `src/documentationllm/utils/cache.py`
+   - Classe principal: `SemanticCache`
+   - Cache em memória e disco
+   - TTL configurável
+   - Estatísticas detalhadas
+
+2. **Funcionalidades**:
+   - Hash SHA-256 para identificação única
+   - Persistência em JSON
+   - Limpeza automática de entradas expiradas
+   - Métricas de hit/miss ratio
+   - Integração com logging
+
+3. **Configurações**:
+   - TTL: 24 horas por padrão
+   - Diretório: data/cache
+   - Limite de entradas: 1000
+   - Ativação via config.yaml
+
+4. **Integração com SemanticLinkingAgent**:
+   - Cache por seção texto-código
+   - Estatísticas por documento
+   - Fallback para API em cache miss
+   - Preservação de contexto
+
+5. **Otimizações**:
+   - Cache em memória para acesso rápido
+   - Persistência em disco para durabilidade
+   - Limpeza automática de entradas antigas
+   - Compressão de dados futura
+
+6. **Monitoramento**:
+   - Estatísticas em tempo real
+   - Logs detalhados
+   - Métricas de economia
+   - Análise de eficiência
+
+### Decisões Técnicas
+
+1. **Estrutura de Dados**:
+   - JSON para persistência
+   - Dicionário em memória
+   - Hash SHA-256 como chave
+   - Metadados por entrada
+
+2. **Performance**:
+   - Cache em memória primário
+   - Persistência assíncrona futura
+   - Limpeza automática
+   - Compressão opcional
+
+3. **Segurança**:
+   - Validação de dados
+   - Sanitização de inputs
+   - Proteção contra race conditions
+   - Backup automático futuro
+
+4. **Integração**:
+   - Interface simples (get/set)
+   - Estatísticas detalhadas
+   - Logging consistente
+   - Configuração flexível
+
+### Próximos Passos
+
+1. **Otimizações**:
+   - Implementar persistência assíncrona
+   - Adicionar compressão de dados
+   - Melhorar limpeza automática
+   - Implementar backup
+
+2. **Monitoramento**:
+   - Dashboard de métricas
+   - Alertas de performance
+   - Análise de economia
+   - Relatórios periódicos
+
+3. **Segurança**:
+   - Criptografia de dados
+   - Validação mais robusta
+   - Proteção contra corrupção
+   - Recuperação automática
