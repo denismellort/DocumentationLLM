@@ -19,6 +19,7 @@ from rich.panel import Panel
 
 # Importar os agentes
 from documentationllm.agents.download_agent import DownloadAgent
+from documentationllm.agents.parsing_agent import ParsingAgent
 from documentationllm.agents.supervisor_agent import SupervisorAgent
 from documentationllm.agents.token_analyst_agent import TokenAnalystAgent
 
@@ -109,27 +110,55 @@ def main() -> int:
             border_style="green"
         ))
         
+        # Criar contexto inicial
+        context = {
+            "config": config,
+            "logger": logger,
+            "version_control": version_control,
+            "execution_id": datetime.now().strftime("%Y%m%d_%H%M%S"),
+            "repo_url": args.source,
+            "directories": config["directories"]
+        }
+        
+        # Inicializar agentes
+        download_agent = DownloadAgent(context)
+        parsing_agent = ParsingAgent(context)
+        supervisor_agent = SupervisorAgent(context)
+        token_analyst = TokenAnalystAgent(context)
+        
         # Executar pipeline
         logger.info("Iniciando pipeline de processamento...")
         
-        # Por enquanto, apenas executa o agente de download
-        # TODO: Implementar pipeline completo
-        download_agent = DownloadAgent(config, logger, version_control)
-        result = download_agent.execute(source=args.source)
+        # 1. Download e identificação de arquivos
+        logger.info("Etapa 1: Download e identificação de arquivos")
+        context = download_agent.run()
+        if not context.get("download_completed"):
+            raise Exception("Falha na etapa de download")
         
-        if result:
-            console.print("[bold green]✓[/bold green] Pipeline executado com sucesso!")
-        else:
-            console.print("[bold red]✗[/bold red] Pipeline falhou!")
-            return 1
+        # 2. Parsing e estruturação
+        logger.info("Etapa 2: Parsing e estruturação dos documentos")
+        context = parsing_agent.run()
+        if not context.get("parsing_completed"):
+            raise Exception("Falha na etapa de parsing")
+        
+        # 3. Análise de tokens
+        logger.info("Etapa 3: Análise de tokens")
+        context = token_analyst.run()
+        
+        # 4. Supervisão e relatório final
+        logger.info("Etapa 4: Geração de relatório final")
+        context = supervisor_agent.run()
+        
+        console.print("[bold green]✓[/bold green] Pipeline executado com sucesso!")
+        return 0
             
     except Exception as e:
         console.print(f"[bold red]Erro:[/bold red] {str(e)}")
+        if args.verbose:
+            import traceback
+            console.print(traceback.format_exc())
         return 1
-    
-    return 0
 
-
-# Executa quando rodado diretamente: `python -m documentationllm.main`
+# Executa quando rodado diretamente
 if __name__ == "__main__":  # pragma: no cover
     sys.exit(main()) 

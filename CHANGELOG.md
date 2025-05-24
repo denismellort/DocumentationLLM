@@ -3,7 +3,17 @@
 Todas as mudanças notáveis deste projeto serão documentadas aqui.
 
 ## [Unreleased]
-- (Liste aqui o que está em desenvolvimento ou planejado)
+### Adicionado
+- Implementação inicial do ParsingAgent para processamento de documentação
+- Suporte a parsing de arquivos Markdown com extração de estrutura
+- Funções de segurança aprimoradas para processamento de conteúdo
+- Integração do ParsingAgent no pipeline principal
+- Novas dependências: markdown, beautifulsoup4, docutils
+
+### Modificado
+- Refatoração do módulo de segurança com novas funções
+- Atualização do pipeline principal para incluir etapa de parsing
+- Melhorias na estrutura de logging e tratamento de erros
 
 ## [0.2.0] - 2025-05-23
 ### Adicionado
