@@ -22,6 +22,7 @@ from documentationllm.agents.download_agent import DownloadAgent
 from documentationllm.agents.parsing_agent import ParsingAgent
 from documentationllm.agents.supervisor_agent import SupervisorAgent
 from documentationllm.agents.token_analyst_agent import TokenAnalystAgent
+from documentationllm.agents.semantic_linking_agent import SemanticLinkingAgent
 
 # Importar utilitários
 from documentationllm.utils.env_utils import load_config
@@ -145,6 +146,7 @@ def main() -> int:
         # Inicializar agentes
         download_agent = DownloadAgent(context)
         parsing_agent = ParsingAgent(context)
+        semantic_linking_agent = SemanticLinkingAgent(context)
         supervisor_agent = SupervisorAgent(context)
         token_analyst = TokenAnalystAgent(context)
         
@@ -162,6 +164,10 @@ def main() -> int:
         context = parsing_agent.run()
         if not context.get("parsing_completed"):
             raise Exception("Falha na etapa de parsing")
+
+        # 2.5 Vinculação semântica (IA)
+        logger.info("Etapa 2.5: Vinculação semântica (IA)")
+        context = semantic_linking_agent.run()
         
         # 3. Análise de tokens
         logger.info("Etapa 3: Análise de tokens")
