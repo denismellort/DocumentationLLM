@@ -103,11 +103,11 @@ def main() -> int:
             log_level = str(log_level)
         print(f"[DEBUG] log_level usado para o logger: {log_level}")
         logger = DocumentationLogger(log_level=log_level)
-        if args.verbose:
-            logger.set_verbose(True)
+        # if args.verbose:
+        #     logger.set_verbose(True)
         
         # Criar controle de versão
-        version_control = VersionControl(config, logger)
+        version_control = VersionControl()
         
         # Mostrar banner inicial
         console.print(Panel(
