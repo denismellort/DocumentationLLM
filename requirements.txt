@@ -1,25 +1,29 @@
 # Dependências principais
-openai>=1.0.0
-python-dotenv>=1.0.0
-gitpython>=3.1.30
-pyyaml>=6.0
-markdown>=3.4.0
-beautifulsoup4>=4.11.0
-tqdm>=4.64.0
+rich==13.6.0
+pydantic==2.4.2
+httpx==0.25.0
+python-dotenv==1.0.0
+PyYAML==6.0.1
 
-# Utilidades e ferramentas
-colorama>=0.4.6
-click>=8.1.3
-rich>=13.0.0
+# Formatação e qualidade de código
+black==23.7.0
+isort==5.12.0
+flake8==6.1.0
+mypy==1.4.1
+bandit==1.7.5
+pre-commit==3.4.0
 
-# Processamento e análise
-pandas>=1.5.0
-numpy>=1.23.0
+# Testes
+pytest==7.4.2
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+hypothesis==6.87.1
 
-# Teste e desenvolvimento
-pytest>=7.0.0
-black>=23.0.0
-flake8>=6.0.0
+# Documentação
+mkdocs-material==9.4.2
+mkdocstrings==0.23.0
+mkdocstrings-python==1.7.0
 
-# Novas dependências
-setuptools>=60.0.0
+# Desenvolvimento
+pip-tools==7.3.0
+hatchling==1.18.0
